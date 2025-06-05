@@ -1,0 +1,49 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Inscritos em {{ evento.nome_evento }} - Admin{% endblock %}
+
+{% block page_title %}Inscritos: {{ evento.nome_evento }}{% endblock %}
+
+{% block content %}
+<p><strong>Data do Evento:</strong> {{ evento.data_hora_evento.strftime('%d/%m/%Y às %H:%M') }}</p>
+
+<a href="{{ url_for('admin_gerenciar_eventos') }}" class="btn btn-secondary btn-sm" style="margin-bottom:20px;">&laquo; Voltar para Gerenciar Eventos</a>
+
+{% if inscricoes %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Nome Completo</th>
+                <th>Idade</th>
+                <th>CPF</th>
+                <th>Telefone</th>
+                <th>Equipe</th>
+                <th>Data da Inscrição</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for inscricao in inscricoes %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ inscricao.nome_participante }} {{ inscricao.sobrenome_participante }}</td>
+                <td>{{ inscricao.idade }}</td>
+                <td>{{ inscricao.cpf }}</td>
+                <td>{{ inscricao.telefone }}</td>
+                <td>
+                    {% if inscricao.equipe %}
+                        {{ inscricao.equipe.nome_equipe }} 
+                        <small>(Prof. {{ inscricao.equipe.professor_responsavel }})</small>
+                    {% else %}
+                        Equipe não informada
+                    {% endif %}
+                </td>
+                <td>{{ inscricao.data_inscricao.strftime('%d/%m/%Y %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>Nenhum participante inscrito neste evento ainda.</p>
+{% endif %}
+{% endblock %}

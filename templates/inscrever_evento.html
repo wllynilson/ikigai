@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscrição no Evento: {{ evento.nome_evento }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f4f4; color: #333; }
+        .navbar { background-color: #333; overflow: hidden; padding: 10px 0; margin-bottom: 20px; width: 100%; }
+        .navbar a { float: left; display: block; color: white; text-align: center; padding: 14px 20px; text-decoration: none; }
+        .navbar a:hover { background-color: #ddd; color: black; }
+        .container { max-width: 700px; margin: 20px auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; }
+        h2 { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        form div { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"], input[type="tel"], input[type="email"], select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box; /* Para incluir padding e border na largura total */
+        }
+        input[type="submit"] { background-color: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        input[type="submit"]:hover { background-color: #0056b3; }
+        .flash-messages { list-style-type: none; padding: 0; margin-bottom: 15px; }
+        .flash-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px; border-radius: 4px; }
+        .flash-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; }
+        .flash-info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; padding: 10px; border-radius: 4px; }
+        .evento-info p { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="{{ url_for('index') }}">Início / Eventos</a>
+        <a href="{{ url_for('rota_cadastrar_equipe') }}">Cadastrar Equipe</a>
+        <a href="{{ url_for('rota_cadastrar_evento') }}">Cadastrar Evento</a>
+    </div>
+
+    <div class="container">
+        <h1>Formulário de Inscrição</h1>
+
+        <div class="evento-info">
+            <h2>Evento: {{ evento.nome_evento }}</h2>
+            <p><strong>Data:</strong> {{ evento.data_hora_evento.strftime('%d/%m/%Y às %H:%M') }}</p>
+            <p><strong>Local:</strong> {{ evento.local_evento }}</p>
+            <p><strong>Vagas restantes:</strong> {{ evento.numero_vagas }}</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flash-messages">
+                {% for category, message in messages %}
+                    <li class="flash-{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        {% if evento.numero_vagas > 0 %}
+            <form method="POST" action="{{ url_for('rota_inscrever_evento', evento_id=evento.id) }}">
+                <div>
+                    <label for="nome_participante">Nome:</label>
+                    <input type="text" id="nome_participante" name="nome_participante" required>
+                </div>
+                <div>
+                    <label for="sobrenome_participante">Sobrenome:</label>
+                    <input type="text" id="sobrenome_participante" name="sobrenome_participante" required>
+                </div>
+                <div>
+                    <label for="idade">Idade:</label>
+                    <input type="number" id="idade" name="idade" min="1" required>
+                </div>
+                <div>
+                    <label for="cpf">CPF:</label>
+                    <input type="text" id="cpf" name="cpf" pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" placeholder="000.000.000-00" required>
+                    <small>Formato: 000.000.000-00</small>
+                </div>
+                <div>
+                    <label for="telefone">Telefone:</label>
+                    <input type="tel" id="telefone" name="telefone" pattern="\(\d{2}\) \d{4,5}-\d{4}" placeholder="(00) 00000-0000" required>
+                    <small>Formato: (00) 00000-0000 ou (00) 0000-0000</small>
+                </div>
+                <div>
+                    <label for="equipe_id">Equipe:</label>
+                    <select id="equipe_id" name="equipe_id" required>
+                        <option value="">Selecione sua equipe</option>
+                        {% for equipe_item in equipes %}
+                            <option value="{{ equipe_item.id }}">{{ equipe_item.nome_equipe }} (Prof. {{ equipe_item.professor_responsavel }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <input type="submit" value="Confirmar Inscrição">
+                </div>
+            </form>
+        {% else %}
+            <p style="color: red; font-weight: bold;">Inscrições encerradas para este evento (vagas esgotadas).</p>
+        {% endif %}
+        <p><a href="{{ url_for('index') }}">Voltar para a lista de eventos</a></p>
+    </div>
+</body>
+</html>
