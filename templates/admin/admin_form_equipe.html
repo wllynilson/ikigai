@@ -1,0 +1,22 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}{{ titulo_form }} - Admin{% endblock %}
+
+{% block page_title %}{{ titulo_form }}{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ action_url }}">
+    <div class="form-group">
+        <label for="nome_equipe">Nome da Equipe:</label>
+        <input type="text" id="nome_equipe" name="nome_equipe" class="form-control" value="{{ equipe_dados.nome_equipe if equipe_dados else '' }}" required>
+    </div>
+    <div class="form-group">
+        <label for="professor_responsavel">Professor Responsável:</label>
+        <input type="text" id="professor_responsavel" name="professor_responsavel" class="form-control" value="{{ equipe_dados.professor_responsavel if equipe_dados else '' }}" required>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="{{ 'Salvar Alterações' if 'Editar' in titulo_form else 'Cadastrar Equipe' }}" class="btn btn-primary">
+        <a href="{{ url_for('admin_gerenciar_equipes') }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+</form>
+{% endblock %}

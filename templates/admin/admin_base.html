@@ -40,9 +40,10 @@
 </head>
 <body>
     <nav class="sidebar">
-        <h2>Admin JJ Eventos</h2>
+        <h2>Admin IKIGAI Eventos</h2>
         <a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if request.endpoint == 'admin_dashboard' else '' }}">Dashboard</a>
         <a href="{{ url_for('admin_gerenciar_eventos') }}" class="{{ 'active' if request.endpoint.startswith('admin_gerenciar_eventos') or request.endpoint.startswith('admin_novo_evento') or request.endpoint.startswith('admin_editar_evento') or request.endpoint.startswith('admin_listar_inscricoes_evento') else '' }}">Gerenciar Eventos</a>
+        <a href="{{ url_for('admin_gerenciar_equipes') }}" class="{{ 'active' if request.endpoint.startswith('admin_gerenciar_equipes') or request.endpoint.startswith('admin_nova_equipe') or request.endpoint.startswith('admin_editar_equipe') or request.endpoint.startswith('admin_listar_inscricoes_equipe') else '' }}">Gerenciar Equipes</a>
         <hr style="border-color: #495057;">
         <a href="{{ url_for('index') }}">Ver Site (Cliente)</a>
     </nav>
