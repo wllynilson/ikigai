@@ -51,6 +51,11 @@
 
                             <td class="text-center">
                                 <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin.editar_inscricao', inscricao_id=inscricao.id) }}"
+                                       class="btn btn-primary btn-sm" title="Editar Inscrição">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </a>
+
                                     {% if inscricao.status == 'Pendente' %}
                                         <form class="d-inline"
                                               action="{{ url_for('admin.aprovar_inscricao', inscricao_id=inscricao.id) }}"

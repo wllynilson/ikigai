@@ -3,6 +3,9 @@ from . import bp  # Importa o 'bp' do __init__.py do admin
 from .. import db # '..' sobe um nível para o pacote 'app' para pegar o 'db'
 from ..models import Evento, Equipe, Inscricao # '..' sobe um nível para pegar os modelos
 from datetime import datetime
+from flask import request # ... outros imports do flask
+from app.admin.forms import EditarInscricaoForm # Importa a classe do formulário que criámos
+
 
 
 @bp.route('/')
@@ -285,3 +288,51 @@ def rejeitar_inscricao(inscricao_id):
         flash(f'Ocorreu um erro ao rejeitar a inscrição: {e}', 'danger')
 
     return redirect(url_for('admin.gerenciar_inscricoes'))
+
+
+@bp.route('/inscricao/editar/<int:inscricao_id>', methods=['GET', 'POST'])
+# @login_required
+def editar_inscricao(inscricao_id):
+    """
+    Rota para editar uma inscrição existente.
+    GET: Exibe o formulário preenchido com os dados atuais.
+    POST: Valida e salva as alterações no banco de dados.
+    """
+    # 1. Busca a inscrição que queremos editar. Erro 404 se não existir.
+    inscricao = Inscricao.query.get_or_404(inscricao_id)
+
+    # 2. Instancia o nosso formulário de edição.
+    form = EditarInscricaoForm()
+
+    # 3. Lógica para quando o formulário é submetido (POST)
+    if form.validate_on_submit():
+        # Atualiza os dados do objeto 'inscricao' com os dados do formulário
+        inscricao.nome_participante = form.nome_participante.data
+        inscricao.sobrenome_participante = form.sobrenome_participante.data
+        inscricao.idade = form.idade.data
+        inscricao.cpf = form.cpf.data
+        inscricao.telefone = form.telefone.data
+
+        try:
+            # Salva as alterações no banco de dados
+            db.session.commit()
+            flash('Inscrição atualizada com sucesso!', 'success')
+            # Redireciona de volta para a página de gerenciamento
+            return redirect(url_for('admin.gerenciar_inscricoes'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ocorreu um erro ao atualizar a inscrição: {e}', 'danger')
+
+    # 4. Lógica para quando a página é carregada pela primeira vez (GET)
+    elif request.method == 'GET':
+        # Preenche o formulário com os dados que já existem no banco de dados
+        form.nome_participante.data = inscricao.nome_participante
+        form.sobrenome_participante.data = inscricao.sobrenome_participante
+        form.idade.data = inscricao.idade
+        form.cpf.data = inscricao.cpf
+        form.telefone.data = inscricao.telefone
+
+    # 5. Renderiza o template, passando o formulário para ele
+    return render_template('admin/admin_editar_inscricao.html',
+                           titulo='Editar Inscrição',
+                           form=form)
