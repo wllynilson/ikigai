@@ -32,9 +32,7 @@
 </head>
 <body>
     <div class="navbar">
-        <a href="{{ url_for('index') }}">Início / Eventos</a>
-        <a href="{{ url_for('rota_cadastrar_equipe') }}">Cadastrar Equipe</a>
-        <a href="{{ url_for('rota_cadastrar_evento') }}">Cadastrar Evento</a>
+        <a href="{{ url_for('public.index') }}">Início / Eventos</a>
     </div>
 
     <div class="container">
@@ -58,7 +56,7 @@
         {% endwith %}
 
         {% if evento.numero_vagas > 0 %}
-            <form method="POST" action="{{ url_for('rota_inscrever_evento', evento_id=evento.id) }}">
+            <form method="POST" action="{{ url_for('public.rota_inscrever_evento', evento_id=evento.id) }}">
                 <div>
                     <label for="nome_participante">Nome:</label>
                     <input type="text" id="nome_participante" name="nome_participante" required>
@@ -97,7 +95,7 @@
         {% else %}
             <p style="color: red; font-weight: bold;">Inscrições encerradas para este evento (vagas esgotadas).</p>
         {% endif %}
-        <p><a href="{{ url_for('index') }}">Voltar para a lista de eventos</a></p>
+        <p><a href="{{ url_for('public.index') }}">Voltar para a lista de eventos</a></p>
     </div>
 </body>
 </html>

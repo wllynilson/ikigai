@@ -1,0 +1,91 @@
+{% extends 'admin/admin_base.html' %}
+
+
+{% block title %}Gerenciar Eventos - Admin{% endblock %}
+
+{% block page_title %}Gerenciar Eventos{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1 class="mt-4 mb-4">{{ titulo }}</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="thead-dark">
+                <tr>
+                    <th>Participante</th>
+                    <th>CPF</th>
+                    <th>Evento</th>
+                    <th>Equipa</th>
+                    <th>Data da Inscrição</th>
+                    <th>Status</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if inscricoes %}
+                    {% for inscricao in inscricoes %}
+                        <tr>
+                            <td>{{ inscricao.nome_participante }} {{ inscricao.sobrenome_participante }}</td>
+                            <td>{{ inscricao.cpf }}</td>
+                            <td>{{ inscricao.evento.nome_evento }}</td>
+                            <td>{{ inscricao.equipe.nome_equipe }}</td>
+                            <td>{{ inscricao.data_inscricao.strftime('%d/%m/%Y às %H:%M') }}</td>
+
+                            <td>
+                                {% if inscricao.status == 'Aprovada' %}
+                                    <span class="badge badge-success">{{ inscricao.status }}</span>
+                                {% elif inscricao.status == 'Rejeitada' %}
+                                    <span class="badge badge-danger">{{ inscricao.status }}</span>
+                                {% else %} <span class="badge badge-warning">{{ inscricao.status }}</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    {% if inscricao.status == 'Pendente' %}
+                                        <form class="d-inline"
+                                              action="{{ url_for('admin.aprovar_inscricao', inscricao_id=inscricao.id) }}"
+                                              method="post">
+                                            <button type="submit" class="btn btn-success btn-sm" title="Aprovar">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                        <form class="d-inline"
+                                              action="{{ url_for('admin.rejeitar_inscricao', inscricao_id=inscricao.id) }}"
+                                              method="post">
+                                            <button type="submit" class="btn btn-secondary btn-sm" title="Rejeitar">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    <form class="d-inline"
+                                          action="{{ url_for('admin.cancelar_inscricao', inscricao_id=inscricao.id) }}"
+                                          method="post"
+                                          onsubmit="return confirm('Tem a certeza que deseja EXCLUIR PERMANENTEMENTE esta inscrição?');">
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Excluir Inscrição">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center">Nenhuma inscrição encontrada.</td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

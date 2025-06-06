@@ -6,7 +6,7 @@
 
 {% block content %}
 <p>Aqui você pode visualizar, adicionar, editar e excluir equipes.</p>
-<a href="{{ url_for('admin_nova_equipe') }}" class="btn btn-primary" style="margin-bottom: 20px;">+ Nova Equipe</a>
+<a href="{{ url_for('admin.nova_equipe') }}" class="btn btn-primary" style="margin-bottom: 20px;">+ Nova Equipe</a>
 
 {% if equipes %}
     <table class="table">
@@ -27,8 +27,8 @@
                 <td>{{ equipe_item.professor_responsavel }}</td>
                 <td>{{ equipe_item.inscricoes|length }}</td> {# Mostra quantos inscritos estão associados a esta equipe #}
                 <td class="action-links">
-                    <a href="{{ url_for('admin_editar_equipe', equipe_id=equipe_item.id) }}" class="btn btn-warning btn-sm">Editar</a>
-                    <form action="{{ url_for('admin_excluir_equipe', equipe_id=equipe_item.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta equipe?');">
+                    <a href="{{ url_for('admin.editar_equipe', equipe_id=equipe_item.id) }}" class="btn btn-warning btn-sm">Editar</a>
+                    <form action="{{ url_for('admin.excluir_equipe', equipe_id=equipe_item.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta equipe?');">
                         <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
                     </form>
                 </td>

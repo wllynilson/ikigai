@@ -1,0 +1,42 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}{{ titulo_form }} - Admin{% endblock %}
+
+{% block page_title %}{{ titulo_form }}{% endblock %}
+
+{% block content %}
+<form method="POST">
+    <div class="form-group">
+        <label for="nome_evento">Nome do Evento:</label>
+        <input type="text" id="nome_evento" name="nome_evento" value="{{ evento_dados.nome_evento if evento_dados else '' }}" required>
+    </div>
+    <div class="form-group">
+        <label for="data_hora_evento">Data e Hora:</label>
+        <input type="datetime-local" id="data_hora_evento" name="data_hora_evento" value="{{ data_para_form if data_para_form else '' }}" required>
+    </div>
+    <div class="form-group">
+        <label for="palestrante">Palestrante:</label>
+        <input type="text" id="palestrante" name="palestrante" value="{{ evento_dados.palestrante if evento_dados else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="descricao">Descrição:</label>
+        <textarea id="descricao" name="descricao">{{ evento_dados.descricao if evento_dados else '' }}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="local_evento">Local:</label>
+        <input type="text" id="local_evento" name="local_evento" value="{{ evento_dados.local_evento if evento_dados else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="preco">Preço (R$):</label>
+        <input type="number" step="0.01" min="0" id="preco" name="preco" value="{{ evento_dados.preco if evento_dados else '0.00' }}">
+    </div>
+    <div class="form-group">
+        <label for="numero_vagas">Número de Vagas:</label>
+        <input type="number" min="0" id="numero_vagas" name="numero_vagas" value="{{ evento_dados.numero_vagas if evento_dados else '' }}" required>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="{{ 'Salvar Alterações' if 'Editar' in titulo_form else 'Cadastrar Evento' }}" class="btn btn-primary">
+        <a href="{{ url_for('admin.gerenciar_eventos') }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+</form>
+{% endblock %}

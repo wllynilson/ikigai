@@ -7,7 +7,7 @@
 {% block content %}
 <p><strong>Data do Evento:</strong> {{ evento.data_hora_evento.strftime('%d/%m/%Y às %H:%M') }}</p>
 
-<a href="{{ url_for('admin_gerenciar_eventos') }}" class="btn btn-secondary btn-sm" style="margin-bottom:20px;">&laquo; Voltar para Gerenciar Eventos</a>
+<a href="{{ url_for('admin.gerenciar_eventos') }}" class="btn btn-secondary btn-sm" style="margin-bottom:20px;">&laquo; Voltar para Gerenciar Eventos</a>
 
 {% if inscricoes %}
     <table class="table">
