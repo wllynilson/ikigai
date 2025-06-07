@@ -24,6 +24,7 @@ class Evento(db.Model):
     nome_evento = db.Column(db.String(200), nullable=False)
     data_hora_evento = db.Column(db.DateTime, nullable=False)
     palestrante = db.Column(db.String(100))
+    imagem_palestrante = db.Column(db.String(300), nullable=True) # URL para a imagem
     descricao = db.Column(db.Text)
     local_evento = db.Column(db.String(200))
     preco = db.Column(db.Float, default=0.0)

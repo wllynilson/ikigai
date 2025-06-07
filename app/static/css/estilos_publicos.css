@@ -14,3 +14,9 @@ h1 { color: #333; text-align: center; }
 .evento .inscricao-link { display: inline-block; margin-top: 10px; padding: 8px 15px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
 .evento .inscricao-link:hover { background-color: #218838; }
 .sem-eventos { text-align: center; font-size: 1.2em; color: #777; }
+
+/* Estilos para a Landing Page */
+.jumbotron {
+    border-radius: 0; /* Remove as bordas arredondadas para um visual mais 'tela cheia' */
+    background-color: #e9ecef; /* Um cinza um pouco mais escuro que o padrão */
+}
