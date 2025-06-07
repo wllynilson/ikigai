@@ -44,6 +44,7 @@
         <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint == 'admin_dashboard' else '' }}">Dashboard</a>
         <a href="{{ url_for('admin.gerenciar_eventos') }}" class="{{ 'active' if request.endpoint.startswith('admin_gerenciar_eventos') or request.endpoint.startswith('admin_novo_evento') or request.endpoint.startswith('admin_editar_evento') or request.endpoint.startswith('admin_listar_inscricoes_evento') else '' }}">Gerenciar Eventos</a>
         <a href="{{ url_for('admin.gerenciar_equipes') }}" class="{{ 'active' if request.endpoint.startswith('admin_gerenciar_equipes') or request.endpoint.startswith('admin_nova_equipe') or request.endpoint.startswith('admin_editar_equipe') or request.endpoint.startswith('admin_listar_inscricoes_equipe') else '' }}">Gerenciar Equipes</a>
+        <a href="{{ url_for('admin.gerenciar_inscricoes') }}" class="{{ 'active' if request.endpoint.startswith('admin_gerenciar_inscricao') or request.endpoint.startswith('admin_nova_inscricao') or request.endpoint.startswith('admin_editar_inscricao') or request.endpoint.startswith('admin_listar_inscricoes_equipe') else '' }}">Gerenciar Inscrições</a>
         <hr style="border-color: #495057;">
         <a href="{{ url_for('public.index') }}">Ver Site (Cliente)</a>
     </nav>
