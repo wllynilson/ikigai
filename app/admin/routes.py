@@ -6,7 +6,8 @@ from datetime import datetime
 from flask import request # ... outros imports do flask
 from app.admin.forms import EditarInscricaoForm # Importa a classe do formulário que criámos
 from sqlalchemy import or_ # Importe o operador 'or_' do SQLAlchemy
-
+from flask import render_template, request, flash, redirect, url_for, Blueprint
+from flask_login import login_required
 
 # @bp.route('/')
 # @bp.route('/dashboard')
@@ -25,7 +26,7 @@ from sqlalchemy import or_ # Importe o operador 'or_' do SQLAlchemy
 
 
 @bp.route('/admin/dashboard')  # Ou @bp.route('/') se quiser que seja a página inicial do admin
-# @login_required
+@login_required
 def dashboard():
     """
     Calcula várias estatísticas e exibe-as num painel de controlo.
@@ -58,12 +59,14 @@ def dashboard():
 
 # --- Gerenciamento de Equipes (já feito, agora dentro do blueprint) ---
 @bp.route('/admin/equipes')
+@login_required
 def gerenciar_equipes():
     equipes = Equipe.query.order_by(Equipe.nome_equipe).all()
     return render_template('admin/admin_gerenciar_equipes.html', equipes=equipes)
 
 
 @bp.route('/admin/equipes/nova', methods=['GET', 'POST'])
+@login_required
 def nova_equipe():
     if request.method == 'POST':
         nome_equipe = request.form['nome_equipe']
@@ -97,6 +100,7 @@ def nova_equipe():
 
 
 @bp.route('/admin/equipes/<int:equipe_id>/editar', methods=['GET', 'POST'])
+@login_required
 def editar_equipe(equipe_id):
     equipe_para_editar = Equipe.query.get_or_404(equipe_id)
 
@@ -134,6 +138,7 @@ def editar_equipe(equipe_id):
 
 
 @bp.route('/admin/equipes/<int:equipe_id>/excluir', methods=['POST'])
+@login_required
 def excluir_equipe(equipe_id):
     equipe_para_excluir = Equipe.query.get_or_404(equipe_id)
 
@@ -157,6 +162,7 @@ def excluir_equipe(equipe_id):
 
 # --- Gerenciamento de Eventos (Onde vamos trabalhar agora) ---
 @bp.route('/admin/eventos')
+@login_required
 def gerenciar_eventos():
     eventos = Evento.query.order_by(Evento.data_hora_evento.desc()).all()
     # Note o 'admin/' no caminho do template
@@ -164,6 +170,7 @@ def gerenciar_eventos():
 
 
 @bp.route('/admin/eventos/<int:evento_id>/inscricoes')
+@login_required
 def listar_inscricoes_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
     inscricoes = Inscricao.query.filter_by(evento_id=evento.id).order_by(Inscricao.data_inscricao).all()
@@ -171,6 +178,7 @@ def listar_inscricoes_evento(evento_id):
 
 
 @bp.route('/admin/eventos/novo', methods=['GET', 'POST'])
+@login_required
 def novo_evento():
     if request.method == 'POST':
         # Pega os dados do formulário
@@ -203,6 +211,7 @@ def novo_evento():
 
 
 @bp.route('/admin/eventos/<int:evento_id>/editar', methods=['GET', 'POST'])
+@login_required
 def editar_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
     if request.method == 'POST':
@@ -226,6 +235,7 @@ def editar_evento(evento_id):
 
 
 @bp.route('/admin/eventos/<int:evento_id>/excluir', methods=['POST'])
+@login_required
 def excluir_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
     if evento.inscricoes:
@@ -239,7 +249,7 @@ def excluir_evento(evento_id):
 
 
 @bp.route('/admin/gerenciar_inscricoes')
-#@login_required  # Remova esta linha se não estiver a usar login
+@login_required
 def gerenciar_inscricoes():
     # 1. Lê o número da página a partir da URL (ex: /gerenciar_inscricoes?page=2)
     # O '1' é o valor padrão, e 'type=int' garante que é um número.
@@ -285,7 +295,7 @@ def gerenciar_inscricoes():
                            titulo='Gerenciar Inscrições')
 
 @bp.route('/admin/inscricao/cancelar/<int:inscricao_id>', methods=['POST'])  # 'bp' é o nome da sua blueprint
-# @login_required
+@login_required
 def cancelar_inscricao(inscricao_id):
     """
     Esta rota encontra uma inscrição pelo seu ID e a remove do banco de dados.
@@ -314,7 +324,7 @@ def cancelar_inscricao(inscricao_id):
 
 
 @bp.route('/admin/inscricao/aprovar/<int:inscricao_id>', methods=['POST'])
-# @login_required
+@login_required
 def aprovar_inscricao(inscricao_id):
     """
     Encontra uma inscrição e altera o seu status para 'Aprovada'.
@@ -332,7 +342,7 @@ def aprovar_inscricao(inscricao_id):
 
 
 @bp.route('/inscricao/rejeitar/<int:inscricao_id>', methods=['POST'])
-# @login_required
+@login_required
 def rejeitar_inscricao(inscricao_id):
     """
     Encontra uma inscrição e altera o seu status para 'Rejeitada'.
@@ -350,7 +360,7 @@ def rejeitar_inscricao(inscricao_id):
 
 
 @bp.route('/inscricao/editar/<int:inscricao_id>', methods=['GET', 'POST'])
-# @login_required
+@login_required
 def editar_inscricao(inscricao_id):
     """
     Rota para editar uma inscrição existente.
