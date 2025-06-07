@@ -5,7 +5,7 @@ from ..models import Evento, Equipe, Inscricao # '..' sobe um nível para pegar 
 from datetime import datetime
 from flask import request # ... outros imports do flask
 from app.admin.forms import EditarInscricaoForm # Importa a classe do formulário que criámos
-
+from sqlalchemy import or_ # Importe o operador 'or_' do SQLAlchemy
 
 
 @bp.route('/')
@@ -206,24 +206,37 @@ def excluir_evento(evento_id):
     return redirect(url_for('admin.gerenciar_eventos'))
 
 
-
-@bp.route('/inscricoes')
-#@login_required  # Se quiser que apenas utilizadores logados vejam
+@bp.route('/gerenciar_inscricoes')
+#@login_required  # Remova esta linha se não estiver a usar login
 def gerenciar_inscricoes():
-    """
-    Esta rota busca TODAS as inscrições feitas no sistema e as exibe.
-    As inscrições são ordenadas por data para mostrar as mais recentes primeiro.
-    """
-    # 1. Busca todas as inscrições no banco de dados.
-    # Usamos .order_by() para organizar os resultados. Aqui, ordenamos
-    # pela data de inscrição, da mais nova para a mais antiga (desc).
-    todas_as_inscricoes = Inscricao.query.order_by(Inscricao.data_inscricao.desc()).all()
 
-    # 2. Renderiza o template, passando a lista de inscrições para ele.
+    termo_pesquisa = request.args.get('q')
+    evento_filtro_id = request.args.get('evento_id')
+
+    query = Inscricao.query
+
+    if termo_pesquisa:
+        query = query.filter(or_(
+            Inscricao.nome_participante.ilike(f'%{termo_pesquisa}%'),
+            Inscricao.sobrenome_participante.ilike(f'%{termo_pesquisa}%'),
+            Inscricao.cpf.ilike(f'%{termo_pesquisa}%')
+        ))
+
+    # 4. Adiciona o filtro de evento, se um evento foi selecionado.
+    if evento_filtro_id:
+        query = query.filter(Inscricao.evento_id == evento_filtro_id)
+
+    # 5. Executa a query final, já com os filtros, e ordena os resultados.
+    inscricoes_filtradas = query.order_by(Inscricao.data_inscricao.desc()).all()
+
+    # 6. Busca todos os eventos para popular o menu de filtro no template.
+    eventos_para_filtro = Evento.query.order_by(Evento.nome_evento).all()
+
+    # 7. Renderiza o template, passando os resultados filtrados e a lista de eventos.
     return render_template('admin/admin_gerenciar_inscricoes.html',
-                           inscricoes=todas_as_inscricoes,
-                           titulo='Gerenciar Todas as Inscrições')
-
+                           inscricoes=inscricoes_filtradas,
+                           eventos_para_filtro=eventos_para_filtro,
+                           titulo='Gerenciar Inscrições')
 
 @bp.route('/inscricao/cancelar/<int:inscricao_id>', methods=['POST'])  # 'bp' é o nome da sua blueprint
 # @login_required
