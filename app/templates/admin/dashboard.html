@@ -1,0 +1,65 @@
+{% extends 'admin/admin_base.html' %}
+
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">{{ titulo }}</h1>
+
+    <div class="row">
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card text-white bg-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="h1 font-weight-bold">{{ stats.pendentes }}</div>
+                            <div class="h5">Inscrições Pendentes</div>
+                        </div>
+                        <i class="fas fa-clock fa-3x"></i>
+                    </div>
+                </div>
+                <a href="{{ url_for('admin.gerenciar_inscricoes') }}" class="card-footer text-white clearfix small z-1">
+                    <span class="float-left">Ver Detalhes</span>
+                    <span class="float-right"><i class="fas fa-arrow-circle-right"></i></span>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="h1 font-weight-bold">{{ stats.aprovadas }}</div>
+                            <div class="h5">Inscrições Aprovadas</div>
+                        </div>
+                        <i class="fas fa-check-circle fa-3x"></i>
+                    </div>
+                </div>
+                <a href="{{ url_for('admin.gerenciar_inscricoes') }}" class="card-footer text-white clearfix small z-1">
+                    <span class="float-left">Ver Detalhes</span>
+                    <span class="float-right"><i class="fas fa-arrow-circle-right"></i></span>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="h1 font-weight-bold">{{ stats.proximos_eventos }}</div>
+                            <div class="h5">Próximos Eventos</div>
+                        </div>
+                        <i class="fas fa-calendar-alt fa-3x"></i>
+                    </div>
+                </div>
+                <a href="{{ url_for('admin.gerenciar_eventos') }}" class="card-footer text-white clearfix small z-1">
+                    <span class="float-left">Ver Eventos</span>
+                    <span class="float-right"><i class="fas fa-arrow-circle-right"></i></span>
+                </a>
+            </div>
+        </div>
+        
+        </div>
+</div>
+{% endblock %}

@@ -8,20 +8,52 @@ from app.admin.forms import EditarInscricaoForm # Importa a classe do formulári
 from sqlalchemy import or_ # Importe o operador 'or_' do SQLAlchemy
 
 
-@bp.route('/')
-@bp.route('/dashboard')
+# @bp.route('/')
+# @bp.route('/dashboard')
+# def dashboard():
+#     total_eventos = Evento.query.count()
+#     total_equipes = Equipe.query.count()
+#     total_inscricoes = Inscricao.query.count()
+#     proximos_eventos = Evento.query.filter(
+#         Evento.data_hora_evento >= datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)).order_by(
+#         Evento.data_hora_evento).limit(5).all()
+#     return render_template('admin/admin_dashboard.html',
+#                            total_eventos=total_eventos,
+#                            total_equipes=total_equipes,
+#                            total_inscricoes=total_inscricoes,
+#                            proximos_eventos=proximos_eventos)
+
+
+@bp.route('/dashboard')  # Ou @bp.route('/') se quiser que seja a página inicial do admin
+# @login_required
 def dashboard():
-    total_eventos = Evento.query.count()
-    total_equipes = Equipe.query.count()
-    total_inscricoes = Inscricao.query.count()
-    proximos_eventos = Evento.query.filter(
-        Evento.data_hora_evento >= datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)).order_by(
-        Evento.data_hora_evento).limit(5).all()
-    return render_template('admin/admin_dashboard.html',
-                           total_eventos=total_eventos,
-                           total_equipes=total_equipes,
-                           total_inscricoes=total_inscricoes,
-                           proximos_eventos=proximos_eventos)
+    """
+    Calcula várias estatísticas e exibe-as num painel de controlo.
+    """
+    # 1. Contar Inscrições por Status
+    contagem_pendentes = Inscricao.query.filter_by(status='Pendente').count()
+    contagem_aprovadas = Inscricao.query.filter_by(status='Aprovada').count()
+
+    # 2. Contar Próximos Eventos (data do evento é no futuro)
+    agora = datetime.utcnow()
+    contagem_proximos_eventos = Evento.query.filter(Evento.data_hora_evento >= agora).count()
+
+    # 3. Contagens Totais
+    contagem_total_eventos = Evento.query.count()
+    contagem_total_equipes = Equipe.query.count()
+    contagem_total_inscricoes = Inscricao.query.count()
+
+    # Dicionário com todas as estatísticas para passar ao template
+    stats = {
+        'pendentes': contagem_pendentes,
+        'aprovadas': contagem_aprovadas,
+        'proximos_eventos': contagem_proximos_eventos,
+        'total_eventos': contagem_total_eventos,
+        'total_equipes': contagem_total_equipes,
+        'total_inscricoes': contagem_total_inscricoes
+    }
+
+    return render_template('admin/dashboard.html', titulo='Dashboard', stats=stats)
 
 
 # --- Gerenciamento de Equipes (já feito, agora dentro do blueprint) ---

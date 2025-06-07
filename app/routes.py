@@ -12,7 +12,7 @@ def index():
     return render_template('index.html', eventos=eventos)
 
 @public_bp.route('/inscrever/<int:evento_id>', methods=['GET', 'POST'])
-def rota_inscrever_evento(evento_id):
+def inscrever_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
     equipes = Equipe.query.order_by(Equipe.nome_equipe).all()
 
