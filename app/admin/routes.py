@@ -24,7 +24,7 @@ from sqlalchemy import or_ # Importe o operador 'or_' do SQLAlchemy
 #                            proximos_eventos=proximos_eventos)
 
 
-@bp.route('/dashboard')  # Ou @bp.route('/') se quiser que seja a página inicial do admin
+@bp.route('/admin/dashboard')  # Ou @bp.route('/') se quiser que seja a página inicial do admin
 # @login_required
 def dashboard():
     """
@@ -57,13 +57,13 @@ def dashboard():
 
 
 # --- Gerenciamento de Equipes (já feito, agora dentro do blueprint) ---
-@bp.route('/equipes')
+@bp.route('/admin/equipes')
 def gerenciar_equipes():
     equipes = Equipe.query.order_by(Equipe.nome_equipe).all()
     return render_template('admin/admin_gerenciar_equipes.html', equipes=equipes)
 
 
-@bp.route('/equipes/nova', methods=['GET', 'POST'])
+@bp.route('/admin/equipes/nova', methods=['GET', 'POST'])
 def nova_equipe():
     if request.method == 'POST':
         nome_equipe = request.form['nome_equipe']
@@ -96,7 +96,7 @@ def nova_equipe():
                            action_url=url_for('admin.nova_equipe'))
 
 
-@bp.route('/equipes/<int:equipe_id>/editar', methods=['GET', 'POST'])
+@bp.route('/admin/equipes/<int:equipe_id>/editar', methods=['GET', 'POST'])
 def editar_equipe(equipe_id):
     equipe_para_editar = Equipe.query.get_or_404(equipe_id)
 
@@ -133,7 +133,7 @@ def editar_equipe(equipe_id):
                            equipe_dados=equipe_para_editar)  # Passa o objeto equipe para preencher o form
 
 
-@bp.route('/equipes/<int:equipe_id>/excluir', methods=['POST'])
+@bp.route('/admin/equipes/<int:equipe_id>/excluir', methods=['POST'])
 def excluir_equipe(equipe_id):
     equipe_para_excluir = Equipe.query.get_or_404(equipe_id)
 
@@ -156,21 +156,21 @@ def excluir_equipe(equipe_id):
 
 
 # --- Gerenciamento de Eventos (Onde vamos trabalhar agora) ---
-@bp.route('/eventos')
+@bp.route('/admin/eventos')
 def gerenciar_eventos():
     eventos = Evento.query.order_by(Evento.data_hora_evento.desc()).all()
     # Note o 'admin/' no caminho do template
     return render_template('admin/admin_gerenciar_eventos.html', eventos=eventos)
 
 
-@bp.route('/eventos/<int:evento_id>/inscricoes')
+@bp.route('/admin/eventos/<int:evento_id>/inscricoes')
 def listar_inscricoes_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
     inscricoes = Inscricao.query.filter_by(evento_id=evento.id).order_by(Inscricao.data_inscricao).all()
     return render_template('admin/admin_listar_inscricoes_evento.html', evento=evento, inscricoes=inscricoes)
 
 
-@bp.route('/eventos/novo', methods=['GET', 'POST'])
+@bp.route('/admin/eventos/novo', methods=['GET', 'POST'])
 def novo_evento():
     if request.method == 'POST':
         # Pega os dados do formulário
@@ -202,7 +202,7 @@ def novo_evento():
     return render_template('admin/admin_form_evento.html', titulo_form="Novo Evento")
 
 
-@bp.route('/eventos/<int:evento_id>/editar', methods=['GET', 'POST'])
+@bp.route('/admin/eventos/<int:evento_id>/editar', methods=['GET', 'POST'])
 def editar_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
     if request.method == 'POST':
@@ -225,7 +225,7 @@ def editar_evento(evento_id):
                            data_para_form=data_para_form)
 
 
-@bp.route('/eventos/<int:evento_id>/excluir', methods=['POST'])
+@bp.route('/admin/eventos/<int:evento_id>/excluir', methods=['POST'])
 def excluir_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
     if evento.inscricoes:
@@ -238,39 +238,53 @@ def excluir_evento(evento_id):
     return redirect(url_for('admin.gerenciar_eventos'))
 
 
-@bp.route('/gerenciar_inscricoes')
+@bp.route('/admin/gerenciar_inscricoes')
 #@login_required  # Remova esta linha se não estiver a usar login
 def gerenciar_inscricoes():
+    # 1. Lê o número da página a partir da URL (ex: /gerenciar_inscricoes?page=2)
+    # O '1' é o valor padrão, e 'type=int' garante que é um número.
+    page = request.args.get('page', 1, type=int)
 
+    # Pega os parâmetros de pesquisa que já tínhamos
     termo_pesquisa = request.args.get('q')
     evento_filtro_id = request.args.get('evento_id')
 
+    # A lógica de construção da query permanece a mesma
     query = Inscricao.query
-
     if termo_pesquisa:
         query = query.filter(or_(
             Inscricao.nome_participante.ilike(f'%{termo_pesquisa}%'),
             Inscricao.sobrenome_participante.ilike(f'%{termo_pesquisa}%'),
             Inscricao.cpf.ilike(f'%{termo_pesquisa}%')
         ))
-
-    # 4. Adiciona o filtro de evento, se um evento foi selecionado.
     if evento_filtro_id:
         query = query.filter(Inscricao.evento_id == evento_filtro_id)
+        # --- INÍCIO DO BLOCO DE DEPURAÇÃO ---
+        # Vamos verificar o que a nossa query encontrou ANTES de paginar
+        print("------------------- DEBUG INFO -------------------")
+        print(f"Termo de Pesquisa (q): {termo_pesquisa}")
+        print(f"Filtro de Evento ID: {evento_filtro_id}")
+        print(f"Total de itens encontrados pela query: {query.count()}")
+        print("----------------------------------------------")
+        # --- FIM DO BLOCO DE DEPURAÇÃO ---
+    # 2. A MUDANÇA PRINCIPAL: Substituímos .all() por .paginate()
+    # 'per_page=15': define quantos itens queremos por página.
+    # 'error_out=False': se alguém tentar aceder a uma página que não existe (ex: página 99), mostra uma página vazia em vez de dar erro 404.
+    inscricoes_paginadas = query.order_by(Inscricao.data_inscricao.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    print(inscricoes_paginadas.items)
 
-    # 5. Executa a query final, já com os filtros, e ordena os resultados.
-    inscricoes_filtradas = query.order_by(Inscricao.data_inscricao.desc()).all()
-
-    # 6. Busca todos os eventos para popular o menu de filtro no template.
+    # A busca de eventos para o filtro continua igual
     eventos_para_filtro = Evento.query.order_by(Evento.nome_evento).all()
 
-    # 7. Renderiza o template, passando os resultados filtrados e a lista de eventos.
+    # 3. Passamos o objeto de paginação para o template
     return render_template('admin/admin_gerenciar_inscricoes.html',
-                           inscricoes=inscricoes_filtradas,
+                           inscricoes_paginadas=inscricoes_paginadas,
                            eventos_para_filtro=eventos_para_filtro,
                            titulo='Gerenciar Inscrições')
 
-@bp.route('/inscricao/cancelar/<int:inscricao_id>', methods=['POST'])  # 'bp' é o nome da sua blueprint
+@bp.route('/admin/inscricao/cancelar/<int:inscricao_id>', methods=['POST'])  # 'bp' é o nome da sua blueprint
 # @login_required
 def cancelar_inscricao(inscricao_id):
     """
@@ -299,7 +313,7 @@ def cancelar_inscricao(inscricao_id):
     return redirect(url_for('admin.gerenciar_inscricoes'))
 
 
-@bp.route('/inscricao/aprovar/<int:inscricao_id>', methods=['POST'])
+@bp.route('/admin/inscricao/aprovar/<int:inscricao_id>', methods=['POST'])
 # @login_required
 def aprovar_inscricao(inscricao_id):
     """
