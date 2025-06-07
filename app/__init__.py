@@ -18,6 +18,10 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = 'sua_chave_secreta_muito_segura_aqui'
 
+    from config import Config
+    app = Flask(__name__)
+    app.config.from_object(Config)
+
     db.init_app(app)
     migrate.init_app(app, db)
 
