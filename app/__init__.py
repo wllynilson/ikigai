@@ -10,7 +10,7 @@ migrate = Migrate()
 def create_app():
     app = Flask(__name__)
     login_manager = LoginManager()
-    login_manager.init_app(app)
+    # login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     login_manager.login_message = "Por favor, faça login para aceder a esta página."
     login_manager.login_message_category = "info"
@@ -23,6 +23,7 @@ def create_app():
     app.config.from_object(Config)
 
     db.init_app(app)
+    login_manager.init_app(app)
     migrate.init_app(app, db)
 
     from . import models
