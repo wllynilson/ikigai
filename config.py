@@ -1,10 +1,17 @@
+# Ficheiro: config.py (VERSÃO ATUALIZADA)
+
 import os
 
-class Config:
-    # A chave secreta será lida da variável de ambiente. Se não existir, usa a chave de desenvolvimento (NÃO USE ESTA EM PRODUÇÃO)
-    SECRET_KEY = os.environ.get('SECRET_KEY') or '0jUWMP1TLSS7EUJPVzV51ewNCC493mKU'
+basedir = os.path.abspath(os.path.dirname(__file__))
 
-    # Configuração do Banco de Dados
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(
-        os.path.abspath(os.path.dirname(__file__)), 'app.db')
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'uma-chave-secreta-muito-dificil-de-adivinhar'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # LÓGICA DE CORREÇÃO DA DATABASE URL
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+    # A configuração final usa a URL corrigida ou a de desenvolvimento (sqlite)
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL or 'sqlite:///' + os.path.join(basedir, 'app.db')
