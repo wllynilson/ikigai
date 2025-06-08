@@ -30,27 +30,3 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('public.index'))
-
-# ROTA TEMPORÁRIA E SECRETA PARA CRIAR O PRIMEIRO ADMIN
-# IMPORTANTE: REMOVA ESTA ROTA APÓS USÁ-LA PELA PRIMEIRA VEZ
-@auth_bp.route('/criar-admin-inicial/<secret_key>')
-def criar_admin_inicial(secret_key):
-    # Para um pouco mais de segurança, use uma chave que só você sabe
-    # O ideal seria ler esta chave de uma variável de ambiente
-    if secret_key != 'meu-segredo-super-secreto':
-        return "Acesso negado", 403
-
-    # Verifica se o admin já não existe para não dar erro
-    if User.query.filter_by(username='admin').first():
-        return "O utilizador 'admin' já existe."
-
-    try:
-        # Cria o utilizador com os dados desejados
-        user = User(username='admin', email='wllynilson@gmail.com')
-        user.set_password('@@123@@abc') # TROQUE ESTA SENHA
-        db.session.add(user)
-        db.session.commit()
-        return "Utilizador admin criado com sucesso!"
-    except Exception as e:
-        db.session.rollback()
-        return f"Erro ao criar utilizador: {e}", 500
