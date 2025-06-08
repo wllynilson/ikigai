@@ -48,6 +48,7 @@ class Inscricao(db.Model):
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
     equipe_id = db.Column(db.Integer, db.ForeignKey('equipes.id'), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='Pendente')
+    email = db.Column(db.String(100), nullable=False, unique=True)
     __table_args__ = (db.UniqueConstraint('cpf', 'evento_id', name='uq_cpf_evento'),)
 
     def __repr__(self):

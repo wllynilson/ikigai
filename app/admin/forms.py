@@ -23,5 +23,7 @@ class EditarInscricaoForm(FlaskForm):
 
     telefone = StringField('Telefone',
                            validators=[DataRequired(), Length(min=8, max=20)])
+    email = StringField('Email',
+                        validators=[DataRequired(), Length(min=5, max=100)])
 
     submit = SubmitField('Salvar Alterações')

@@ -16,18 +16,36 @@ admin_bp = Blueprint('admin', __name__,
                     static_folder='static',
                     url_prefix='/admin') # Exemplo de criação da blueprint
 
-# --- LOGIN AUTOMÁTICO EM DESENVOLVIMENTO ---
+
+# --- LOGIN AUTOMÁTICO EM DESENVOLVIMENTO (VERSÃO DE DEPURAÇÃO) ---
 @admin_bp.before_request
 def before_request_handler():
-    # Verifica se a app está em modo DEBUG (local) E se ninguém está logado
-    if current_app.config.get('DEBUG') and not current_user.is_authenticated:
-        # Encontra o primeiro utilizador na tabela (que deve ser o seu admin)
-        user = User.query.first()
+    print("\n--- DEBUG: before_request está a ser executado ---")
+
+    is_debug = current_app.config.get('DEBUG')
+    is_authenticated = current_user.is_authenticated
+
+    print(f"Modo DEBUG está ativo? -> {is_debug}")
+    print(f"Utilizador já está autenticado? -> {is_authenticated}")
+
+    if is_debug and not is_authenticated:
+        print("-> Condições para login automático foram CUMPRIDAS. A procurar pelo utilizador...")
+        user = User.query.first()  # Pega o primeiro utilizador da tabela
+
         if user:
-            # Faz o login desse utilizador automaticamente
+            print(f"-> Utilizador '{user.username}' encontrado. A tentar fazer login...")
             login_user(user)
+            print("-> Login automático EFETUADO!")
+        else:
+            print(
+                "-> AVISO: NENHUM UTILIZADOR ENCONTRADO NA BASE DE DADOS LOCAL. Não é possível fazer login automático.")
+    else:
+        print("-> Condições para login automático NÃO foram cumpridas. Nenhum login automático será feito.")
+
+    print("--- Fim da execução do before_request ---\n")
 
 
+# --- FIM DO BLOCO DE LOGIN AUTOMÁTICO ---
 @bp.route('/admin/dashboard')  # Ou @bp.route('/') se quiser que seja a página inicial do admin
 @login_required
 def dashboard():
@@ -384,6 +402,7 @@ def editar_inscricao(inscricao_id):
         inscricao.idade = form.idade.data
         inscricao.cpf = form.cpf.data
         inscricao.telefone = form.telefone.data
+        inscricao.email = form.email.data
 
         try:
             # Salva as alterações no banco de dados
@@ -403,6 +422,7 @@ def editar_inscricao(inscricao_id):
         form.idade.data = inscricao.idade
         form.cpf.data = inscricao.cpf
         form.telefone.data = inscricao.telefone
+        form.email.data = inscricao.email
 
     # 5. Renderiza o template, passando o formulário para ele
     return render_template('admin/admin_editar_inscricao.html',

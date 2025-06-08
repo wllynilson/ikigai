@@ -40,6 +40,10 @@ def inscrever_evento(evento_id):
         if idade <= 0:
             flash('Idade deve ser um valor positivo.', 'danger')
             return render_template('inscrever_evento.html', evento=evento, equipes=equipes)
+        email = request.form['email']
+        if not email or '@' not in email:
+            flash('Email inválido.', 'danger')
+            return render_template('inscrever_evento.html', evento=evento, equipes=equipes)
 
         inscricao_existente = Inscricao.query.filter_by(cpf=cpf, evento_id=evento.id).first()
         if inscricao_existente:
@@ -52,6 +56,7 @@ def inscrever_evento(evento_id):
             idade=idade,
             cpf=cpf,
             telefone=telefone,
+            email=email,
             evento_id=evento.id,
             equipe_id=equipe_id
         )
