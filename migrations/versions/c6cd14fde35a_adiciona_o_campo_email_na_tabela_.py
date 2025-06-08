@@ -19,12 +19,15 @@ depends_on = None
 def upgrade():
     with op.batch_alter_table('inscricoes', schema=None) as batch_op:
         batch_op.add_column(sa.Column('email', sa.String(length=100), nullable=True))
-    # Aqui você pode usar SQL para preencher os emails existentes, por exemplo:
-    op.execute("UPDATE inscricoes SET email = 'preencher@email.com' WHERE email IS NULL")
+    # Preencher cada email com um valor único temporário
+    op.execute("""
+        UPDATE inscricoes
+        SET email = 'temp_' || id || '@email.com'
+        WHERE email IS NULL
+    """)
     with op.batch_alter_table('inscricoes', schema=None) as batch_op:
         batch_op.alter_column('email', nullable=False)
         batch_op.create_unique_constraint('uq_inscricoes_email', ['email'])
-    # ### end Alembic commands ###
 
 
 def downgrade():
