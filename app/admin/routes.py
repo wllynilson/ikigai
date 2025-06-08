@@ -1,28 +1,31 @@
 from flask import render_template, redirect, url_for, flash, request
 from . import bp  # Importa o 'bp' do __init__.py do admin
 from .. import db # '..' sobe um nível para o pacote 'app' para pegar o 'db'
-from ..models import Evento, Equipe, Inscricao # '..' sobe um nível para pegar os modelos
+from ..models import Evento, Equipe, Inscricao, User # '..' sobe um nível para pegar os modelos
 from datetime import datetime
 from flask import request # ... outros imports do flask
 from app.admin.forms import EditarInscricaoForm # Importa a classe do formulário que criámos
 from sqlalchemy import or_ # Importe o operador 'or_' do SQLAlchemy
 from flask import render_template, request, flash, redirect, url_for, Blueprint
 from flask_login import login_required
+from flask import render_template, request, flash, redirect, url_for, Blueprint, current_app
+from flask_login import login_required, current_user, login_user
 
-# @bp.route('/')
-# @bp.route('/dashboard')
-# def dashboard():
-#     total_eventos = Evento.query.count()
-#     total_equipes = Equipe.query.count()
-#     total_inscricoes = Inscricao.query.count()
-#     proximos_eventos = Evento.query.filter(
-#         Evento.data_hora_evento >= datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)).order_by(
-#         Evento.data_hora_evento).limit(5).all()
-#     return render_template('admin/admin_dashboard.html',
-#                            total_eventos=total_eventos,
-#                            total_equipes=total_equipes,
-#                            total_inscricoes=total_inscricoes,
-#                            proximos_eventos=proximos_eventos)
+admin_bp = Blueprint('admin', __name__,
+                    template_folder='templates',
+                    static_folder='static',
+                    url_prefix='/admin') # Exemplo de criação da blueprint
+
+# --- LOGIN AUTOMÁTICO EM DESENVOLVIMENTO ---
+@admin_bp.before_request
+def before_request_handler():
+    # Verifica se a app está em modo DEBUG (local) E se ninguém está logado
+    if current_app.config.get('DEBUG') and not current_user.is_authenticated:
+        # Encontra o primeiro utilizador na tabela (que deve ser o seu admin)
+        user = User.query.first()
+        if user:
+            # Faz o login desse utilizador automaticamente
+            login_user(user)
 
 
 @bp.route('/admin/dashboard')  # Ou @bp.route('/') se quiser que seja a página inicial do admin

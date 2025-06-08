@@ -8,6 +8,10 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'uma-chave-secreta-muito-dificil-de-adivinhar'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # Linha para verificar o modo DEBUG
+    # O '1' significa 'True'. No Render, esta variável não existe, então será False.
+    DEBUG = os.environ.get('FLASK_DEBUG') == '1'
+
     # LÓGICA DE CORREÇÃO DA DATABASE URL
     DATABASE_URL = os.environ.get('DATABASE_URL')
     if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
