@@ -1,52 +1,27 @@
-from flask import render_template, redirect, url_for, flash, request
-from . import bp  # Importa o 'bp' do __init__.py do admin
-from .. import db # '..' sobe um nível para o pacote 'app' para pegar o 'db'
-from ..models import Evento, Equipe, Inscricao, User # '..' sobe um nível para pegar os modelos
-from datetime import datetime
-from flask import request # ... outros imports do flask
-from app.admin.forms import EditarInscricaoForm # Importa a classe do formulário que criámos
-from sqlalchemy import or_ # Importe o operador 'or_' do SQLAlchemy
-from flask import render_template, request, flash, redirect, url_for, Blueprint
-from flask_login import login_required
-from flask import render_template, request, flash, redirect, url_for, Blueprint, current_app
+from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user, login_user
+from sqlalchemy import or_
+from datetime import datetime
 
-admin_bp = Blueprint('admin', __name__,
-                    template_folder='templates',
-                    static_folder='static',
-                    url_prefix='/admin') # Exemplo de criação da blueprint
+from . import bp  # Importa o 'bp' do __init__.py do admin
+from .. import db  # '..' sobe um nível para o pacote 'app' para pegar o 'db'
+from ..models import Evento, Equipe, Inscricao, User
+from .forms import EditarInscricaoForm # 'from .' pois assumo que forms.py está na mesma pasta admin
 
 
-# --- LOGIN AUTOMÁTICO EM DESENVOLVIMENTO (VERSÃO DE DEPURAÇÃO) ---
-@admin_bp.before_request
+# --- LOGIN AUTOMÁTICO EM DESENVOLVIMENTO ---
+@bp.before_request
 def before_request_handler():
-    print("\n--- DEBUG: before_request está a ser executado ---")
-
-    is_debug = current_app.config.get('DEBUG')
-    is_authenticated = current_user.is_authenticated
-
-    print(f"Modo DEBUG está ativo? -> {is_debug}")
-    print(f"Utilizador já está autenticado? -> {is_authenticated}")
-
-    if is_debug and not is_authenticated:
-        print("-> Condições para login automático foram CUMPRIDAS. A procurar pelo utilizador...")
-        user = User.query.first()  # Pega o primeiro utilizador da tabela
-
+    # Verifica se a app está em modo DEBUG (local) E se ninguém está logado
+    if current_app.config.get('DEBUG') and not current_user.is_authenticated:
+        # Encontra o primeiro utilizador na tabela (que deve ser o seu admin)
+        user = User.query.first()
         if user:
-            print(f"-> Utilizador '{user.username}' encontrado. A tentar fazer login...")
+            # Faz o login desse utilizador automaticamente
             login_user(user)
-            print("-> Login automático EFETUADO!")
-        else:
-            print(
-                "-> AVISO: NENHUM UTILIZADOR ENCONTRADO NA BASE DE DADOS LOCAL. Não é possível fazer login automático.")
-    else:
-        print("-> Condições para login automático NÃO foram cumpridas. Nenhum login automático será feito.")
-
-    print("--- Fim da execução do before_request ---\n")
-
-
 # --- FIM DO BLOCO DE LOGIN AUTOMÁTICO ---
-@bp.route('/admin/dashboard')  # Ou @bp.route('/') se quiser que seja a página inicial do admin
+
+@bp.route('/dashboard')  # Ou @bp.route('/') se quiser que seja a página inicial do admin
 @login_required
 def dashboard():
     """
@@ -79,14 +54,14 @@ def dashboard():
 
 
 # --- Gerenciamento de Equipes (já feito, agora dentro do blueprint) ---
-@bp.route('/admin/equipes')
+@bp.route('/equipes')
 @login_required
 def gerenciar_equipes():
     equipes = Equipe.query.order_by(Equipe.nome_equipe).all()
     return render_template('admin/admin_gerenciar_equipes.html', equipes=equipes)
 
 
-@bp.route('/admin/equipes/nova', methods=['GET', 'POST'])
+@bp.route('/equipes/nova', methods=['GET', 'POST'])
 @login_required
 def nova_equipe():
     if request.method == 'POST':
@@ -120,7 +95,7 @@ def nova_equipe():
                            action_url=url_for('admin.nova_equipe'))
 
 
-@bp.route('/admin/equipes/<int:equipe_id>/editar', methods=['GET', 'POST'])
+@bp.route('/equipes/<int:equipe_id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar_equipe(equipe_id):
     equipe_para_editar = Equipe.query.get_or_404(equipe_id)
@@ -152,13 +127,13 @@ def editar_equipe(equipe_id):
                 flash(f'Erro ao atualizar equipe: {str(e)}', 'danger')
 
     # Se GET, mostra o formulário preenchido com os dados da equipe
-    return render_template('/admin/admin_form_equipe.html',
+    return render_template('/admin_form_equipe.html',
                            titulo_form=f"Editar Equipe: {equipe_para_editar.nome_equipe}",
                            action_url=url_for('admin.editar_equipe', equipe_id=equipe_id),
                            equipe_dados=equipe_para_editar)  # Passa o objeto equipe para preencher o form
 
 
-@bp.route('/admin/equipes/<int:equipe_id>/excluir', methods=['POST'])
+@bp.route('/equipes/<int:equipe_id>/excluir', methods=['POST'])
 @login_required
 def excluir_equipe(equipe_id):
     equipe_para_excluir = Equipe.query.get_or_404(equipe_id)
@@ -182,7 +157,7 @@ def excluir_equipe(equipe_id):
 
 
 # --- Gerenciamento de Eventos (Onde vamos trabalhar agora) ---
-@bp.route('/admin/eventos')
+@bp.route('/eventos')
 @login_required
 def gerenciar_eventos():
     eventos = Evento.query.order_by(Evento.data_hora_evento.desc()).all()
@@ -190,7 +165,7 @@ def gerenciar_eventos():
     return render_template('admin/admin_gerenciar_eventos.html', eventos=eventos)
 
 
-@bp.route('/admin/eventos/<int:evento_id>/inscricoes')
+@bp.route('/eventos/<int:evento_id>/inscricoes')
 @login_required
 def listar_inscricoes_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
@@ -198,7 +173,7 @@ def listar_inscricoes_evento(evento_id):
     return render_template('admin/admin_listar_inscricoes_evento.html', evento=evento, inscricoes=inscricoes)
 
 
-@bp.route('/admin/eventos/novo', methods=['GET', 'POST'])
+@bp.route('/eventos/novo', methods=['GET', 'POST'])
 @login_required
 def novo_evento():
     if request.method == 'POST':
@@ -231,7 +206,7 @@ def novo_evento():
     return render_template('admin/admin_form_evento.html', titulo_form="Novo Evento")
 
 
-@bp.route('/admin/eventos/<int:evento_id>/editar', methods=['GET', 'POST'])
+@bp.route('/eventos/<int:evento_id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
@@ -255,7 +230,7 @@ def editar_evento(evento_id):
                            data_para_form=data_para_form)
 
 
-@bp.route('/admin/eventos/<int:evento_id>/excluir', methods=['POST'])
+@bp.route('/eventos/<int:evento_id>/excluir', methods=['POST'])
 @login_required
 def excluir_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
@@ -269,7 +244,7 @@ def excluir_evento(evento_id):
     return redirect(url_for('admin.gerenciar_eventos'))
 
 
-@bp.route('/admin/gerenciar_inscricoes')
+@bp.route('/gerenciar_inscricoes')
 @login_required
 def gerenciar_inscricoes():
     # 1. Lê o número da página a partir da URL (ex: /gerenciar_inscricoes?page=2)
@@ -315,7 +290,7 @@ def gerenciar_inscricoes():
                            eventos_para_filtro=eventos_para_filtro,
                            titulo='Gerenciar Inscrições')
 
-@bp.route('/admin/inscricao/cancelar/<int:inscricao_id>', methods=['POST'])  # 'bp' é o nome da sua blueprint
+@bp.route('/inscricao/cancelar/<int:inscricao_id>', methods=['POST'])  # 'bp' é o nome da sua blueprint
 @login_required
 def cancelar_inscricao(inscricao_id):
     """
@@ -344,7 +319,7 @@ def cancelar_inscricao(inscricao_id):
     return redirect(url_for('admin.gerenciar_inscricoes'))
 
 
-@bp.route('/admin/inscricao/aprovar/<int:inscricao_id>', methods=['POST'])
+@bp.route('/inscricao/aprovar/<int:inscricao_id>', methods=['POST'])
 @login_required
 def aprovar_inscricao(inscricao_id):
     """
