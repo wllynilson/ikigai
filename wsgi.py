@@ -1,5 +1,5 @@
-# Ficheiro: wsgi.py
-from app import app
+# Ficheiro: wsgi.py (VERSÃO CORRIGIDA)
+from app import create_app
 
-if __name__ == "__main__":
-    app.run()
+# Chamamos a função para construir a aplicação
+app = create_app()
