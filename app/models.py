@@ -39,20 +39,15 @@ class Inscricao(db.Model):
     # ... (código da classe Inscricao)
     __tablename__ = 'inscricoes'
     id = db.Column(db.Integer, primary_key=True)
-    nome_participante = db.Column(db.String(100), nullable=False)
-    sobrenome_participante = db.Column(db.String(100), nullable=False)
-    idade = db.Column(db.Integer, nullable=False)
-    cpf = db.Column(db.String(14), nullable=False)
-    telefone = db.Column(db.String(20), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     data_inscricao = db.Column(db.DateTime, default=datetime.utcnow)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
     equipe_id = db.Column(db.Integer, db.ForeignKey('equipes.id'), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='Pendente')
     email = db.Column(db.String(100), nullable=False, unique=True)
-    __table_args__ = (db.UniqueConstraint('cpf', 'evento_id', name='uq_cpf_evento'),)
 
     def __repr__(self):
-        return f'<Inscricao {self.nome_participante} no evento {self.evento_id}>'
+        return f'<Inscricao {self.id} do utilizador {self.user_id} no evento {self.evento_id}>'
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -63,6 +58,10 @@ class User(UserMixin, db.Model):
     nome_completo = db.Column(db.String(150), nullable=True)
     bio = db.Column(db.Text, nullable=True)
     imagem_perfil = db.Column(db.String(300), nullable=True)  # URL para a imagem de perfil
+    role = db.Column(db.String(20), nullable=False, default='user')  # Papel do utilizador
+    cpf = db.Column(db.String(14), unique=True, nullable=True)  # CPF será único e opcional no início
+    telefone = db.Column(db.String(20), nullable=True)  # Telefone também opcional
+    inscricoes = db.relationship('Inscricao', backref='participante', lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
