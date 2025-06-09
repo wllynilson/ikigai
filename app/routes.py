@@ -65,7 +65,7 @@ def inscrever_evento(evento_id):
             db.session.add(nova_inscricao)
             evento.numero_vagas -= 1
             db.session.commit()
-            flash(f'Inscrição para {evento.nome_evento} realizada com sucesso!', 'success')
+            flash(f'Inscrição no {evento.nome_evento} concluída com sucesso! \n Para garantir sua participação, finalize o pagamento o quanto antes.', 'success')
             return redirect(url_for('public.index'))
         except Exception as e:
             db.session.rollback()

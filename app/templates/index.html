@@ -2,6 +2,13 @@
 {% block title %}Início{% endblock %}
 
 {% block content %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
     <div class="jumbotron text-center bg-light mb-5">
         <h1 class="display-4">Bem-vindo à Ikigai Eventos</h1>
