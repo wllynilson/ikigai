@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}Inscrição: {{ evento.nome_evento }}{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-8 offset-md-2">
-        <h1 class="mb-4">Formulário de Inscrição</h1>
+        <h1>Formulário de Inscrição</h1>
 
         <div class="card mb-4">
             <div class="card-header">
                 <h2>Evento: {{ evento.nome_evento }}</h2>
             </div>
             <div class="card-body">
+                <p><strong>Participante:</strong> {{ current_user.nome_completo or current_user.username }}</p>
+                <p><strong>Email:</strong> {{ current_user.email }}</p>
                 <p><strong>Data:</strong> {{ evento.data_hora_evento.strftime('%d/%m/%Y às %H:%M') }}</p>
-                <p><strong>Local:</strong> {{ evento.local_evento }}</p>
-                <p><strong>Vagas restantes:</strong> {{ evento.numero_vagas }}</p>
             </div>
         </div>
 
@@ -26,64 +26,21 @@
             {% endif %}
         {% endwith %}
 
-        {% if evento.numero_vagas > 0 %}
-            <form method="POST" action="{{ url_for('public.inscrever_evento', evento_id=evento.id) }}">
-                
-                <div class="form-row">
-                    <div class="form-group col-md-6">
-                        <label for="nome_participante">Nome:</label>
-                        <input type="text" class="form-control" id="nome_participante" name="nome_participante" required>
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="" novalidate>
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ form.equipe_id.label(class="form-control-label") }}
+                        {{ form.equipe_id(class="form-control") }}
                     </div>
-                    <div class="form-group col-md-6">
-                        <label for="sobrenome_participante">Sobrenome:</label>
-                        <input type="text" class="form-control" id="sobrenome_participante" name="sobrenome_participante" required>
+                    <div class="form-group mt-4">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                        <a href="{{ url_for('public.index') }}" class="btn btn-secondary btn-lg">Cancelar</a>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="idade">Idade:</label>
-                    <input type="number" class="form-control" id="idade" name="idade" min="1" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="cpf">CPF:</label>
-                    <input type="text" class="form-control" id="cpf" name="cpf" pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" placeholder="000.000.000-00" required>
-                    <small class="form-text text-muted">Formato: 000.000.000-00</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="telefone">Telefone:</label>
-                    <input type="tel" class="form-control" id="telefone" name="telefone"  placeholder="(00)00000-0000" required>
-                    <small class="form-text text-muted">Formato: (00) 00000-0000 ou (00) 0000-0000</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="email">E-mail:</label>
-                    <input type="email" class="form-control" id="email" name="email" required>
-                    <small class="form-text text-muted">Certifique-se de que o e-mail está correto.</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="equipe_id">Equipe:</label>
-                    <select class="form-control" id="equipe_id" name="equipe_id" required>
-                        <option value="">Selecione sua equipe</option>
-                        {% for equipe_item in equipes %}
-                            <option value="{{ equipe_item.id }}">{{ equipe_item.nome_equipe }} (Prof. {{ equipe_item.professor_responsavel }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <hr>
-                
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary btn-lg">Confirmar Inscrição</button>
-                </div>
-            </form>
-        {% else %}
-            <div class="alert alert-danger">Inscrições encerradas para este evento (vagas esgotadas).</div>
-        {% endif %}
-        
-        <a href="{{ url_for('public.index') }}" class="btn btn-secondary mt-3">Voltar para a lista de eventos</a>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

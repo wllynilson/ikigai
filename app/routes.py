@@ -1,7 +1,12 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from . import db # Importação relativa para o 'db' do __init__.py
-from .models import Evento, Equipe, Inscricao # Importação relativa para os modelos
 from datetime import datetime
+
+from flask import Blueprint
+from flask import render_template, redirect, url_for, flash
+from flask_login import login_required, current_user
+
+from app import db
+from app.models import Evento, Equipe, Inscricao
+from app.public.forms import InscricaoEventoForm  # Importa o novo formulário
 
 public_bp = Blueprint('public', __name__)
 
@@ -11,65 +16,41 @@ def index():
     eventos = Evento.query.filter(Evento.data_hora_evento >= datetime.utcnow()).order_by(Evento.data_hora_evento).all()
     return render_template('index.html', eventos=eventos)
 
+
 @public_bp.route('/inscrever/<int:evento_id>', methods=['GET', 'POST'])
+@login_required  # Garante que apenas utilizadores logados podem aceder
 def inscrever_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
-    equipes = Equipe.query.order_by(Equipe.nome_equipe).all()
 
-    if request.method == 'POST':
-        if evento.numero_vagas <= 0:
-            flash('Inscrições encerradas para este evento (vagas esgotadas).', 'danger')
-            return redirect(url_for('rota_inscrever_evento', evento_id=evento.id))
+    # Verifica se o utilizador já está inscrito neste evento
+    inscricao_existente = Inscricao.query.filter_by(user_id=current_user.id, evento_id=evento.id).first()
+    if inscricao_existente:
+        flash('Você já está inscrito neste evento.', 'info')
+        return redirect(url_for('public.index'))
 
-        nome_participante = request.form['nome_participante']
-        sobrenome_participante = request.form['sobrenome_participante']
-        try:
-            idade = int(request.form['idade'])
-        except ValueError:
-            flash('Idade inválida.', 'danger')
-            return render_template('inscrever_evento.html', evento=evento, equipes=equipes)
+    if evento.numero_vagas <= 0:  # Uma verificação extra
+        flash('As inscrições para este evento estão encerradas (vagas esgotadas).', 'warning')
+        return redirect(url_for('public.index'))
 
-        cpf = request.form['cpf']
-        telefone = request.form['telefone']
-        try:
-            equipe_id = int(request.form['equipe_id'])
-        except ValueError:
-            flash('Seleção de equipe inválida.', 'danger')
-            return render_template('inscrever_evento.html', evento=evento, equipes=equipes)
+    form = InscricaoEventoForm()
+    # Popula o menu dropdown com as equipas existentes
+    form.equipe_id.choices = [(e.id, f"{e.nome_equipe} (Prof. {e.professor_responsavel})") for e in
+                              Equipe.query.order_by('nome_equipe').all()]
 
-        if idade <= 0:
-            flash('Idade deve ser um valor positivo.', 'danger')
-            return render_template('inscrever_evento.html', evento=evento, equipes=equipes)
-        email = request.form['email']
-        if not email or '@' not in email:
-            flash('Email inválido.', 'danger')
-            return render_template('inscrever_evento.html', evento=evento, equipes=equipes)
-
-        inscricao_existente = Inscricao.query.filter_by(cpf=cpf, evento_id=evento.id).first()
-        if inscricao_existente:
-            flash('Este CPF já está inscrito neste evento.', 'warning')
-            return render_template('inscrever_evento.html', evento=evento, equipes=equipes)
-
+    if form.validate_on_submit():
         nova_inscricao = Inscricao(
-            nome_participante=nome_participante,
-            sobrenome_participante=sobrenome_participante,
-            idade=idade,
-            cpf=cpf,
-            telefone=telefone,
-            email=email,
+            user_id=current_user.id,
             evento_id=evento.id,
-            equipe_id=equipe_id
+            equipe_id=form.equipe_id.data
+            # O status será 'Pendente' por defeito
         )
+        # Opcional: Decrementar o número de vagas
+        # evento.numero_vagas -= 1
+        db.session.add(nova_inscricao)
+        db.session.commit()
+        flash(
+            f'Inscrição no evento "{evento.nome_evento}" realizada com sucesso! O seu status está pendente de aprovação.',
+            'success')
+        return redirect(url_for('public.index'))
 
-        try:
-            db.session.add(nova_inscricao)
-            evento.numero_vagas -= 1
-            db.session.commit()
-            flash(f'Inscrição no {evento.nome_evento} concluída com sucesso! \n Para garantir sua participação, finalize o pagamento o quanto antes.', 'success')
-            return redirect(url_for('public.index'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao processar inscrição: {str(e)}', 'danger')  # Usar str(e) para a mensagem
-            return render_template('inscrever_evento.html', evento=evento, equipes=equipes)
-
-    return render_template('inscrever_evento.html', evento=evento, equipes=equipes)
+    return render_template('inscrever_evento.html', title=f"Inscrição: {evento.nome_evento}", form=form, evento=evento)

@@ -36,18 +36,18 @@ class Evento(db.Model):
 
 
 class Inscricao(db.Model):
-    # ... (código da classe Inscricao)
     __tablename__ = 'inscricoes'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     data_inscricao = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), nullable=False, default='Pendente')
+    # --- As 3 conexões essenciais ---
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
     equipe_id = db.Column(db.Integer, db.ForeignKey('equipes.id'), nullable=False)
-    status = db.Column(db.String(20), nullable=False, default='Pendente')
-    email = db.Column(db.String(100), nullable=False, unique=True)
 
     def __repr__(self):
-        return f'<Inscricao {self.id} do utilizador {self.user_id} no evento {self.evento_id}>'
+        return f'<Inscricao {self.id} do utilizador {self.user_id}>'
+
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'

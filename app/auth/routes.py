@@ -12,7 +12,7 @@ auth_bp = Blueprint('auth', __name__, template_folder='templates')
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('admin.rota_dashboard')) # Já está logado, vai para o dashboard
+        return redirect(url_for('admin.dashboard')) # Já está logado, vai para o dashboard
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -23,7 +23,7 @@ def login():
 
         login_user(user, remember=form.remember_me.data)
         flash('Login efetuado com sucesso!', 'success')
-        return redirect(url_for('admin.rota_dashboard'))
+        return redirect(url_for('admin.dashboard'))
 
     return render_template('auth/login.html', title='Login', form=form)
 
