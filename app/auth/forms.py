@@ -1,11 +1,13 @@
 # Ficheiro: app/auth/forms.py
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms.fields.simple import TextAreaField
-from wtforms.validators import DataRequired, ValidationError
-from wtforms.validators import Length, Email, Optional, URL
-from app.models import User
 from flask_login import current_user
+from flask_wtf import FlaskForm
+from wtforms import BooleanField
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.fields.simple import TextAreaField
+from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
+from wtforms.validators import Length, Optional, URL
+
+from app.models import User
 
 
 class LoginForm(FlaskForm):
@@ -36,3 +38,27 @@ class EditarPerfilForm(FlaskForm):
             user = User.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError('Este email já está em uso. Por favor, escolha outro.')
+
+class RegistrationForm(FlaskForm):
+    """Formulário para novos utilizadores se registarem."""
+    username = StringField('Nome de Utilizador', validators=[DataRequired(), Length(min=3, max=64)])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    nome_completo = StringField('Nome Completo', validators=[DataRequired(), Length(max=150)])
+    cpf = StringField('CPF', validators=[DataRequired(), Length(min=11, max=14)])
+    telefone = StringField('Telefone', validators=[DataRequired(), Length(min=8, max=20)])
+    password = PasswordField('Palavra-passe', validators=[DataRequired(), Length(min=6)])
+    password2 = PasswordField(
+        'Repetir Palavra-passe', validators=[DataRequired(), EqualTo('password', message='As palavras-passe devem ser iguais.')])
+    submit = SubmitField('Registar')
+
+    # Validador personalizado para garantir que o username não existe
+    def validate_username(self, username):
+        user = User.query.filter_by(username=username.data).first()
+        if user is not None:
+            raise ValidationError('Este nome de utilizador já existe. Por favor, escolha outro.')
+
+    # Validador personalizado para garantir que o email não existe
+    def validate_email(self, email):
+        user = User.query.filter_by(email=email.data).first()
+        if user is not None:
+            raise ValidationError('Este email já está a ser utilizado. Por favor, escolha outro.')

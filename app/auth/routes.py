@@ -2,9 +2,10 @@
 from flask import render_template, flash, redirect, url_for, Blueprint, request
 from flask_login import login_user, logout_user, current_user, login_required
 
+from app import db  # Importe o db
+from app.auth.forms import EditarPerfilForm
+from app.auth.forms import LoginForm, RegistrationForm
 from app.models import User
-from app.auth.forms import LoginForm, EditarPerfilForm
-from app import db # Importe o db
 
 auth_bp = Blueprint('auth', __name__, template_folder='templates')
 
@@ -65,3 +66,31 @@ def editar_perfil():
         form.imagem_perfil.data = current_user.imagem_perfil
 
     return render_template('auth/editar_perfil.html', title='Editar Perfil', form=form)
+
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    # Se o utilizador já estiver logado, não deve poder registar-se novamente
+    if current_user.is_authenticated:
+        return redirect(url_for('public.index'))
+
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        # Cria a nova instância de User com os dados do formulário
+        user = User(
+            username=form.username.data,
+            email=form.email.data,
+            nome_completo=form.nome_completo.data,
+            cpf=form.cpf.data,
+            telefone=form.telefone.data
+        )
+        user.set_password(form.password.data)  # Cifra a palavra-passe
+
+        # O 'role' será 'user' por defeito, como definimos no modelo
+        db.session.add(user)
+        db.session.commit()
+
+        flash('Parabéns, o seu registo foi efetuado com sucesso!', 'success')
+        return redirect(url_for('auth.login'))  # Redireciona para a página de login
+
+    return render_template('auth/register.html', title='Registar', form=form)
