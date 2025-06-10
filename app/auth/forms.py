@@ -11,14 +11,14 @@ from app.models import User
 
 
 class LoginForm(FlaskForm):
-    username = StringField('Nome de Utilizador', validators=[DataRequired()])
-    password = PasswordField('Palavra-passe', validators=[DataRequired()])
+    username = StringField('Usuário', validators=[DataRequired()])
+    password = PasswordField('Senha', validators=[DataRequired()])
     remember_me = BooleanField('Lembrar-me')
     submit = SubmitField('Entrar')
 
 class EditarPerfilForm(FlaskForm):
     """Formulário para o utilizador editar o seu perfil."""
-    username = StringField('Nome de Utilizador', validators=[DataRequired(), Length(min=2, max=64)])
+    username = StringField('Usuário', validators=[DataRequired(), Length(min=2, max=64)])
     email = StringField('Email', validators=[DataRequired(), Email()])
     nome_completo = StringField('Nome Completo', validators=[Optional(), Length(max=150)])
     bio = TextAreaField('Biografia', validators=[Optional(), Length(max=500)])
@@ -46,9 +46,9 @@ class RegistrationForm(FlaskForm):
     nome_completo = StringField('Nome Completo', validators=[DataRequired(), Length(max=150)])
     cpf = StringField('CPF', validators=[DataRequired(), Length(min=11, max=14)])
     telefone = StringField('Telefone', validators=[DataRequired(), Length(min=8, max=20)])
-    password = PasswordField('Palavra-passe', validators=[DataRequired(), Length(min=6)])
+    password = PasswordField('Senha', validators=[DataRequired(), Length(min=6)])
     password2 = PasswordField(
-        'Repetir Palavra-passe', validators=[DataRequired(), EqualTo('password', message='As palavras-passe devem ser iguais.')])
+        'Repetir Senha', validators=[DataRequired(), EqualTo('password', message='As Senhas devem ser iguais.')])
     submit = SubmitField('Registar')
 
     # Validador personalizado para garantir que o username não existe
