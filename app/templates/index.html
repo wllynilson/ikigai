@@ -17,47 +17,62 @@
         <p>Explore os nossos próximos eventos e encontre o seu lugar na nossa comunidade.</p>
         <a class="btn btn-primary btn-lg" href="#eventos" role="button">Ver Eventos</a>
     </div>
-    <div id="sobre" class="mb-5">
+
+
+    {% if eventos %}
+        <div class="row">
+            {% for evento in eventos %}
+                <div class="col-lg-4 col-md-6 mb-4 d-flex align-items-stretch">
+                    <div class="card shadow-sm w-100">
+
+                        <img src="{{ evento.imagem_palestrante or 'https://via.placeholder.com/400x300.png?text=Evento' }}" class="card-img-top" alt="Imagem do evento {{ evento.nome_evento }}" style="height: 200px; object-fit: cover;">
+
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ evento.nome_evento }}</h5>
+
+                            {% if evento.palestrante %}
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    <i class="fas fa-user-tie mr-2"></i>{{ evento.palestrante }}
+                                </h6>
+                            {% endif %}
+
+                            <p class="card-text text-muted flex-grow-1">{{ evento.descricao|truncate(100) }}</p>
+
+                            <ul class="list-group list-group-flush mt-auto">
+                                <li class="list-group-item"><i class="fas fa-calendar-alt text-primary mr-2"></i>{{ evento.data_hora_evento.strftime('%d de %b, %Y às %H:%M') }}</li>
+                                <li class="list-group-item"><i class="fas fa-map-marker-alt text-primary mr-2"></i>{{ evento.local_evento or 'Local a definir' }}</li>
+                            </ul>
+                        </div>
+
+                        <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+                            <span class="font-weight-bold text-success">
+                                {% if evento.preco > 0 %}
+                                    R$ {{ "%.2f"|format(evento.preco|float) }}
+                                {% else %}
+                                    Gratuito
+                                {% endif %}
+                            </span>
+                            <a href="{{ url_for('public.inscrever_evento', evento_id=evento.id) }}" class="btn btn-primary">Inscrever-se</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="sem-eventos">Nenhum evento programado no momento. Volte em breve!</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+<div id="sobre" class="mb-5">
         <div class="row">
             <div class="col-lg-8 offset-lg-2 text-center">
                 <h2 class="mb-4">Sobre a Ikigai</h2>
                 <p class="lead" style="line-height: 1.8;">
-                    [Substitua este texto pela descrição da sua empresa. Fale sobre o que é "Ikigai" para vocês, a vossa
-                    missão de organizar eventos com propósito e como vocês ajudam a vossa comunidade a encontrar paixão
-                    e conhecimento. Descreva o tipo de eventos que vocês promovem e o que os torna especiais.]
+                    Cada evento da Ikigai é pensado para inspirar. Valorizamos os detalhes, a experiência humana e o impacto social.
+                    Buscamos envolver comunidades locais, incentivar novos talentos e proporcionar  momentos que despertem conhecimento, emoção e pertencimento.
+                    Do planejamento à execução, tudo é feito com o mesmo princípio que nos deu nome: criar algo que tenha propósito, valor e faça sentido para quem participa.
                 </p>
             </div>
         </div>
     </div>
-
-    <h1 class="mb-4 text-center" id="eventos">Próximos Eventos</h1>
-    {% if eventos %}
-        {% for evento in eventos %}
-            <div class="evento card mb-4">
-                <div class="card-body">
-                    <div class="row">
-                        {% if evento.imagem_palestrante %}
-                            <div class="col-md-3 text-center">
-                                <img src="{{ evento.imagem_palestrante }}" alt="Foto de {{ evento.palestrante }}"
-                                     class="img-fluid rounded-circle" style="max-width: 150px;">
-                            </div>
-                        {% endif %}
-
-                        <div class="col-md-{{ '9' if evento.imagem_palestrante else '12' }}">
-                            <h2 class="card-title">{{ evento.nome_evento }}</h2>
-                            {% if evento.palestrante %}
-                                <p><strong>Palestrante:</strong> {{ evento.palestrante }}</p>
-                            {% endif %}
-                            <p><strong>Data e Hora:</strong> {{ evento.data_hora_evento.strftime('%d/%m/%Y às %H:%M') }}
-                            </p>
-                            <a href="{{ url_for('public.inscrever_evento', evento_id=evento.id) }}"
-                               class="inscricao-link btn btn-success mt-2">Inscrever-se</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p class="sem-eventos">Nenhum evento programado no momento. Volte em breve!</p>
-    {% endif %}
-{% endblock %}
