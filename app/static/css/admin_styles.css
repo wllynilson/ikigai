@@ -1,57 +1,172 @@
-/* Ficheiro: app/static/css/admin_styles.css */
+/* Ficheiro: app/static/css/admin_styles.css (VERSÃO MELHORADA) */
 
-body {
-    display: flex; /* Habilita o layout flexbox para o body */
-    background-color: #f8f9fa; /* Um cinza claro para o fundo */
+/* 1. Definição da Paleta de Cores e Variáveis Globais (a sua marca) */
+:root {
+    --primary-red: rgb(214, 58, 38);
+    --dark-red: rgb(180, 45, 28);
+    --light-red: rgba(214, 58, 38, 0.1);
+    --primary-white: rgb(248, 249, 250); /* Um branco um pouco mais suave */
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --border-radius: 12px;
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* 2. Estilos Gerais e Tipografia */
+body {
+    display: flex;
+    background-color: var(--primary-white);
+    font-family: var(--font-family);
+}
+
+/* 3. Estilização da Sidebar */
 .sidebar {
-    width: 250px; /* Largura fixa para a sidebar */
-    min-height: 100vh; /* Altura mínima de 100% da tela */
-    background-color: #343a40; /* Cor escura da sidebar */
-    padding: 15px;
+    width: 260px;
+    min-height: 100vh;
+    background: linear-gradient(160deg, var(--primary-red) 0%, var(--dark-red) 100%);
+    padding: 20px;
     color: white;
-    flex-shrink: 0; /* Impede que a sidebar encolha */
+    flex-shrink: 0;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.1);
 }
 
 .sidebar h2 {
-    font-size: 1.5rem;
-    margin-bottom: 20px;
+    font-size: 1.6rem;
+    margin-bottom: 25px;
     text-align: center;
     color: #fff;
-    border-bottom: 1px solid #495057;
-    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 15px;
+    font-weight: 700;
 }
 
 .sidebar a {
-    display: block;
-    color: #adb5bd; /* Cor dos links */
-    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 12px 15px;
     text-decoration: none;
-    border-radius: 4px;
-    margin-bottom: 5px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
 }
 
 .sidebar a:hover {
-    background-color: #495057; /* Cor de fundo ao passar o mouse */
+    background-color: rgba(255, 255, 255, 0.1);
     color: #fff;
 }
 
 .sidebar a.active {
-    background-color: #007bff; /* Cor do link ativo */
-    color: #fff;
-    font-weight: bold;
+    background-color: #fff;
+    color: var(--primary-red);
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
+.sidebar a i {
+    width: 20px;
+    text-align: center;
+}
+
+/* 4. Conteúdo Principal */
 .main-content {
-    flex-grow: 1; /* Faz o conteúdo principal ocupar todo o espaço restante */
-    padding: 30px;
-    overflow-y: auto; /* Adiciona scroll se o conteúdo for muito grande */
+    flex-grow: 1;
+    padding: 40px;
+    overflow-y: auto;
 }
 
-/* Ajustes no cabeçalho do conteúdo e mensagens flash */
-.content-header {
-    border-bottom: 1px solid #dee2e6;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
+.content-header h1 {
+    font-weight: 700;
+    color: #333;
+    font-size: 2.2rem;
+}
+
+/* 5. Estilização de Componentes Bootstrap */
+
+/* Cards */
+.card {
+    border-radius: var(--border-radius);
+    border: none;
+    box-shadow: var(--shadow);
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* Botões */
+.btn {
+    border-radius: 25px; /* Botões arredondados */
+    font-weight: 600;
+    padding: 0.5rem 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.btn-primary {
+    background-color: var(--primary-red);
+    border-color: var(--primary-red);
+}
+
+.btn-primary:hover {
+    background-color: var(--dark-red);
+    border-color: var(--dark-red);
+}
+
+/* Tabelas */
+.table thead.thead-dark th {
+    background-color: #343a40; /* Mantém um cabeçalho escuro para contraste */
+    border-color: #454d55;
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--light-red);
+}
+
+/* Alertas (Flash Messages) */
+.alert {
+    border-radius: var(--border-radius);
+    border: none;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+    box-shadow: var(--shadow);
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+}
+
+.alert-info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border-left: 4px solid #17a2b8;
+}
+
+.alert-warning {
+    background: #fff3cd;
+    color: #856404;
+    border-left: 4px solid #ffc107;
+}
+
+
+/* Formulários */
+.form-control:focus {
+    border-color: var(--primary-red);
+    box-shadow: 0 0 0 0.2rem var(--light-red);
 }
