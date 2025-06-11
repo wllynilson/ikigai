@@ -26,7 +26,7 @@
             <div class="events-grid">
                 {% for evento in eventos %}
                     <div class="event-card">
-                        <img src="{{ evento.imagem_palestrante or 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDN8fGV2ZW50fGVufDB8fHx8MTYyOTM0ODg4MQ&ixlib=rb-1.2.1&q=80&w=400' }}"
+                        <img src="{{ evento.imagem_palestrante or url_for('static', filename='images/default-event.jpg') }}"
                              class="event-image"
                              alt="Imagem do evento {{ evento.nome_evento }}">
 

@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+          integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_styles.css') }}">
 
@@ -12,18 +13,23 @@
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
+<div class="admin-wrapper">
     <nav class="sidebar">
         <h2>Admin IKIGAI</h2>
-        <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint == 'admin.dashboard' else '' }}">
+        <a href="{{ url_for('admin.dashboard') }}"
+           class="{{ 'active' if request.endpoint == 'admin.dashboard' else '' }}">
             <i class="fas fa-tachometer-alt"></i> Dashboard
         </a>
-        <a href="{{ url_for('admin.gerenciar_eventos') }}" class="{{ 'active' if 'evento' in request.endpoint else '' }}">
+        <a href="{{ url_for('admin.gerenciar_eventos') }}"
+           class="{{ 'active' if 'evento' in request.endpoint else '' }}">
             <i class="fas fa-calendar-alt"></i> Gerenciar Eventos
         </a>
-        <a href="{{ url_for('admin.gerenciar_equipes') }}" class="{{ 'active' if 'equipe' in request.endpoint else '' }}">
+        <a href="{{ url_for('admin.gerenciar_equipes') }}"
+           class="{{ 'active' if 'equipe' in request.endpoint else '' }}">
             <i class="fas fa-users"></i> Gerenciar Equipes
         </a>
-        <a href="{{ url_for('admin.gerenciar_inscricoes') }}" class="{{ 'active' if 'inscricao' in request.endpoint else '' }}">
+        <a href="{{ url_for('admin.gerenciar_inscricoes') }}"
+           class="{{ 'active' if 'inscricao' in request.endpoint else '' }}">
             <i class="fas fa-clipboard-list"></i> Gerenciar Inscrições
         </a>
         <hr style="border-color: #495057;">
@@ -50,10 +56,17 @@
 
         {% block content %}{% endblock %}
     </main>
+</div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
-    {% block scripts %}{% endblock %}
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+        integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+        integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+        crossorigin="anonymous"></script>
+{% block scripts %}{% endblock %}
 </body>
 </html>
