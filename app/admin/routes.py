@@ -8,6 +8,8 @@ from . import bp  # Importa o 'bp' do __init__.py do admin
 from .. import db  # '..' sobe um nível para o pacote 'app' para pegar o 'db'
 from ..models import Evento, Equipe, Inscricao, User
 from .forms import EditarInscricaoForm # 'from .' pois assumo que forms.py está na mesma pasta admin
+from flask import jsonify
+from sqlalchemy.orm import joinedload
 
 
 # --- LOGIN AUTOMÁTICO EM DESENVOLVIMENTO ---
@@ -257,26 +259,23 @@ def gerenciar_inscricoes():
     evento_filtro_id = request.args.get('evento_id')
 
     # A lógica de construção da query permanece a mesma
-    query = Inscricao.query
+    # query = Inscricao.query
+    query = Inscricao.query.options(
+        joinedload(Inscricao.participante),
+        joinedload(Inscricao.evento),
+        joinedload(Inscricao.equipe)
+    )
     if termo_pesquisa:
         query = query.filter(or_(
-            Inscricao.nome_participante.ilike(f'%{termo_pesquisa}%'),
-            Inscricao.sobrenome_participante.ilike(f'%{termo_pesquisa}%'),
-            Inscricao.cpf.ilike(f'%{termo_pesquisa}%')
+            Inscricao.user_id.ilike(f'%{termo_pesquisa}%'),  # Busca pelo ID do usuário
+            User.username.ilike(f'%{termo_pesquisa}%'),  # Busca pelo nome de usuário
+            User.nome_completo.ilike(f'%{termo_pesquisa}%'),  # Busca pelo nome completo do usuário
+            User.cpf.ilike(f'%{termo_pesquisa}%'),  # Busca pelo CPF do usuário
+            User.email.ilike(f'%{termo_pesquisa}%')  # Busca pelo email do usuário
         ))
     if evento_filtro_id:
         query = query.filter(Inscricao.evento_id == evento_filtro_id)
-        # --- INÍCIO DO BLOCO DE DEPURAÇÃO ---
-        # Vamos verificar o que a nossa query encontrou ANTES de paginar
-        print("------------------- DEBUG INFO -------------------")
-        print(f"Termo de Pesquisa (q): {termo_pesquisa}")
-        print(f"Filtro de Evento ID: {evento_filtro_id}")
-        print(f"Total de itens encontrados pela query: {query.count()}")
-        print("----------------------------------------------")
-        # --- FIM DO BLOCO DE DEPURAÇÃO ---
-    # 2. A MUDANÇA PRINCIPAL: Substituímos .all() por .paginate()
-    # 'per_page=15': define quantos itens queremos por página.
-    # 'error_out=False': se alguém tentar aceder a uma página que não existe (ex: página 99), mostra uma página vazia em vez de dar erro 404.
+
     inscricoes_paginadas = query.order_by(Inscricao.data_inscricao.desc()).paginate(
         page=page, per_page=10, error_out=False
     )
@@ -299,43 +298,34 @@ def cancelar_inscricao(inscricao_id):
     Aceita apenas pedidos POST por segurança.
     """
     # 1. Busca a inscrição no banco de dados. Se não encontrar, retorna um erro 404 (Not Found).
-    inscricao_para_cancelar = Inscricao.query.get_or_404(inscricao_id)
-
+    inscricao = Inscricao.query.get_or_404(inscricao_id)
     try:
-        # 2. Remove o objeto da sessão do banco de dados.
-        db.session.delete(inscricao_para_cancelar)
-
-        # 3. Confirma (commit) a transação para salvar a mudança permanentemente.
+        db.session.delete(inscricao)
         db.session.commit()
-
-        # 4. Cria uma mensagem flash para dar feedback ao utilizador.
-        flash('Inscrição cancelada com sucesso!', 'success')
-
+        # A resposta de sucesso agora diz ao JavaScript para 'remover' a linha
+        return jsonify({'status': 'success', 'action': 'delete', 'message': 'Inscrição excluída com sucesso!'})
     except Exception as e:
-        # Em caso de erro, desfaz a transação e mostra uma mensagem de erro.
         db.session.rollback()
-        flash(f'Ocorreu um erro ao cancelar a inscrição: {e}', 'danger')
-
-    # 5. Redireciona o utilizador de volta para a página de gerenciamento.
-    return redirect(url_for('admin.gerenciar_inscricoes'))
+        return jsonify({'status': 'error', 'message': f'Ocorreu um erro ao excluir a inscrição: {str(e)}'}), 500
 
 
 @bp.route('/inscricao/aprovar/<int:inscricao_id>', methods=['POST'])
 @admin_required
 def aprovar_inscricao(inscricao_id):
-    """
-    Encontra uma inscrição e altera o seu status para 'Aprovada'.
-    """
     inscricao = Inscricao.query.get_or_404(inscricao_id)
+
+    if inscricao.status == 'Aprovada':
+        # Se já estiver aprovada, apenas informa. Código de sucesso 200.
+        return jsonify({'status': 'info', 'message': 'Esta inscrição já estava aprovada.'}), 200
     try:
         inscricao.status = 'Aprovada'
         db.session.commit()
-        flash('Inscrição APROVADA com sucesso!', 'success')
+        # A resposta de sucesso agora é em JSON
+        return jsonify({'status': 'success', 'message': 'Inscrição aprovada com sucesso!', 'novo_status_html': '<span class="badge badge-success">Aprovada</span>'})
     except Exception as e:
         db.session.rollback()
-        flash(f'Ocorreu um erro ao aprovar a inscrição: {e}', 'danger')
-
-    return redirect(url_for('admin.gerenciar_inscricoes'))
+        # A resposta de erro também é em JSON. Código de erro 500.
+        return jsonify({'status': 'error', 'message': f'Ocorreu um erro: {str(e)}'}), 500
 
 
 @bp.route('/inscricao/rejeitar/<int:inscricao_id>', methods=['POST'])
@@ -345,15 +335,17 @@ def rejeitar_inscricao(inscricao_id):
     Encontra uma inscrição e altera o seu status para 'Rejeitada'.
     """
     inscricao = Inscricao.query.get_or_404(inscricao_id)
+    if inscricao.status == 'Rejeitada':
+        return jsonify({'status': 'info', 'message': 'Esta inscrição já estava rejeitada.'}), 200
     try:
         inscricao.status = 'Rejeitada'
         db.session.commit()
-        flash('Inscrição foi Rejeitada.', 'info')  # Usamos 'info' para um tom neutro
+        # A resposta de sucesso é em JSON com o novo HTML do badge
+        return jsonify({'status': 'success', 'message': 'Inscrição rejeitada.',
+                        'novo_status_html': '<span class="badge badge-danger">Rejeitada</span>'})
     except Exception as e:
         db.session.rollback()
-        flash(f'Ocorreu um erro ao rejeitar a inscrição: {e}', 'danger')
-
-    return redirect(url_for('admin.gerenciar_inscricoes'))
+        return jsonify({'status': 'error', 'message': f'Ocorreu um erro: {str(e)}'}), 500
 
 
 @bp.route('/inscricao/editar/<int:inscricao_id>', methods=['GET', 'POST'])
@@ -366,6 +358,7 @@ def editar_inscricao(inscricao_id):
     """
     # 1. Busca a inscrição que queremos editar. Erro 404 se não existir.
     inscricao = Inscricao.query.get_or_404(inscricao_id)
+    user = User.query.get_or_404(inscricao.user_id)  # Pega o usuário associado à inscrição
 
     # 2. Instancia o nosso formulário de edição.
     form = EditarInscricaoForm()
@@ -393,12 +386,12 @@ def editar_inscricao(inscricao_id):
     # 4. Lógica para quando a página é carregada pela primeira vez (GET)
     elif request.method == 'GET':
         # Preenche o formulário com os dados que já existem no banco de dados
-        form.nome_participante.data = inscricao.nome_participante
-        form.sobrenome_participante.data = inscricao.sobrenome_participante
-        form.idade.data = inscricao.idade
-        form.cpf.data = inscricao.cpf
-        form.telefone.data = inscricao.telefone
-        form.email.data = inscricao.email
+        form.nome_participante.data = user.username
+        form.sobrenome_participante.data = user.nome_completo
+        # form.idade.data = inscricao.idade
+        form.cpf.data = user.cpf
+        form.telefone.data = user.telefone
+        form.email.data = user.email
 
     # 5. Renderiza o template, passando o formulário para ele
     return render_template('admin/admin_editar_inscricao.html',
