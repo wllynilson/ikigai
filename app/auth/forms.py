@@ -44,8 +44,8 @@ class RegistrationForm(FlaskForm):
     username = StringField('Nome usuário', validators=[DataRequired(), Length(min=3, max=64)])
     email = StringField('Email', validators=[DataRequired(), Email()])
     nome_completo = StringField('Nome Completo', validators=[DataRequired(), Length(max=150)])
-    cpf = StringField('CPF', validators=[DataRequired(), Length(min=11, max=14)])
-    telefone = StringField('Telefone', validators=[DataRequired(), Length(min=8, max=20)])
+    cpf = StringField('CPF', validators=[DataRequired()])
+    telefone = StringField('Telefone', validators=[DataRequired()])
     password = PasswordField('Senha', validators=[DataRequired(), Length(min=6)])
     password2 = PasswordField(
         'Repetir Senha', validators=[DataRequired(), EqualTo('password', message='As Senhas devem ser iguais.')])

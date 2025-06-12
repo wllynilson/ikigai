@@ -15,7 +15,6 @@
             <tr>
                 <th>#</th>
                 <th>Nome Completo</th>
-                <th>Idade</th>
                 <th>CPF</th>
                 <th>Telefone</th>
                 <th>Equipe</th>
@@ -26,12 +25,11 @@
             {% for inscricao in inscricoes %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{{ inscricao.nome_participante }} {{ inscricao.sobrenome_participante }}</td>
-                <td>{{ inscricao.idade }}</td>
-                <td>{{ inscricao.cpf }}</td>
-                <td>{{ inscricao.telefone }}</td>
+                <td>{{ inscricao.participante.nome_completo }}</td>
+                <td>{{ inscricao.participante.cpf }}</td>
+                <td>{{ inscricao.participante.telefone }}</td>
                 <td>
-                    {% if inscricao.equipe %}
+                    {% if inscricao.equipe.nome_equipe %}
                         {{ inscricao.equipe.nome_equipe }} 
                         <small>(Prof. {{ inscricao.equipe.professor_responsavel }})</small>
                     {% else %}

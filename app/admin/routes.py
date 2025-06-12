@@ -130,7 +130,7 @@ def editar_equipe(equipe_id):
                 flash(f'Erro ao atualizar equipe: {str(e)}', 'danger')
 
     # Se GET, mostra o formulário preenchido com os dados da equipe
-    return render_template('/admin_form_equipe.html',
+    return render_template('admin/admin_form_equipe.html',
                            titulo_form=f"Editar Equipe: {equipe_para_editar.nome_equipe}",
                            action_url=url_for('admin.editar_equipe', equipe_id=equipe_id),
                            equipe_dados=equipe_para_editar)  # Passa o objeto equipe para preencher o form
@@ -172,7 +172,13 @@ def gerenciar_eventos():
 @admin_required
 def listar_inscricoes_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
-    inscricoes = Inscricao.query.filter_by(evento_id=evento.id).order_by(Inscricao.data_inscricao).all()
+
+    # --- CONSULTA OTIMIZADA COM JOIN ---
+    inscricoes = Inscricao.query.options(
+        joinedload(Inscricao.participante),  # Junta a tabela 'users' através da relação 'participante'
+        joinedload(Inscricao.equipe)  # Junta a tabela 'equipes' através da relação 'equipe'
+    ).filter_by(evento_id=evento.id).order_by(Inscricao.data_inscricao).all()
+
     return render_template('admin/admin_listar_inscricoes_evento.html', evento=evento, inscricoes=inscricoes)
 
 

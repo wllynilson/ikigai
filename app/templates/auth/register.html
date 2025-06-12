@@ -58,4 +58,29 @@
         </div>
     </div>
 </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Máscara para o campo CPF ---
+        const cpfElement = document.getElementById('cpf');
+        if (cpfElement) {
+            const cpfMaskOptions = {
+                mask: '000.000.000-00'
+            };
+            const cpfMask = IMask(cpfElement, cpfMaskOptions);
+        }
+
+        // --- Máscara para o campo Telefone ---
+        const telefoneElement = document.getElementById('telefone');
+        if (telefoneElement) {
+            // Opções para aceitar tanto telemóveis com 8 ou 9 dígitos
+            const telefoneMaskOptions = {
+                mask: [
+                    { mask: '(00) 0000-0000' },
+                    { mask: '(00) 00000-0000' }
+                ]
+            };
+            const telefoneMask = IMask(telefoneElement, telefoneMaskOptions);
+        }
+    });
+    </script>
 {% endblock %}

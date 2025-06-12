@@ -28,7 +28,7 @@
                 <td class="action-links">
                     <a href="{{ url_for('admin.listar_inscricoes_evento', evento_id=evento_item.id) }}" class="btn btn-info btn-sm">Ver Inscritos ({{ evento_item.inscricoes|length }})</a>
                     <a href="{{ url_for('admin.editar_evento', evento_id=evento_item.id) }}" class="btn btn-warning btn-sm">Editar</a>
-                    <a href="{{ url_for('admin.editar_evento', evento_id=evento_item.id) }}" class="btn btn-danger btn-sm">Excluir</a>
+                    <a href="{{ url_for('admin.excluir_evento', evento_id=evento_item.id) }}" class="btn btn-danger btn-sm">Excluir</a>
                 </td>
             </tr>
             {% endfor %}
