@@ -1,8 +1,9 @@
 # Ficheiro: app/admin/forms.py
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, IntegerField, SubmitField
-from wtforms.validators import DataRequired, Length, NumberRange
+from wtforms import StringField, TextAreaField, SubmitField, FloatField, IntegerField
+from wtforms.fields import DateTimeLocalField
+from wtforms.validators import DataRequired, Length, NumberRange, Optional, URL
 
 
 class EditarInscricaoForm(FlaskForm):
@@ -27,3 +28,19 @@ class EditarInscricaoForm(FlaskForm):
                         validators=[DataRequired(), Length(min=5, max=100)])
 
     submit = SubmitField('Salvar Alterações')
+
+class EventoForm(FlaskForm):
+    """Formulário completo para criar e editar eventos."""
+    nome_evento = StringField('Nome do Evento', validators=[DataRequired(), Length(max=200)])
+    data_hora_evento = DateTimeLocalField('Data e Hora do Evento', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
+    palestrante = StringField('Palestrante', validators=[Optional(), Length(max=100)])
+    imagem_palestrante = StringField('URL da Imagem do Palestrante',
+                                     validators=[Optional(), URL(message="Por favor, insira uma URL válida.")])
+    descricao = TextAreaField('Descrição', validators=[Optional()])
+    local_evento = StringField('Local do Evento', validators=[Optional(), Length(max=200)])
+    preco = FloatField('Preço (R$)', default=0.0, validators=[Optional(), NumberRange(min=0)])
+    numero_vagas = IntegerField('Número de Vagas', validators=[DataRequired(), NumberRange(min=0)])
+    pix_copia_e_cola = TextAreaField('Pix Copia e Cola',
+                                     validators=[Optional()],
+                                     description="Insira o código Pix 'copia e cola' para eventos pagos.")
+    submit = SubmitField('Salvar Evento')

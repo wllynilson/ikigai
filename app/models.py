@@ -29,6 +29,8 @@ class Evento(db.Model):
     local_evento = db.Column(db.String(200))
     preco = db.Column(db.Float, default=0.0)
     numero_vagas = db.Column(db.Integer, nullable=False)
+    pix_copia_e_cola = db.Column(db.Text, nullable=True)  # Campo para o Pix
+
     inscricoes = db.relationship('Inscricao', backref='evento', lazy=True)
 
     def __repr__(self):

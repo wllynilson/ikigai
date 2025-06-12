@@ -1,42 +1,70 @@
 {% extends 'admin/admin_base.html' %}
 
-{% block title %}{{ titulo_form }} - Admin{% endblock %}
+{% block title %}{{ titulo_form }}{% endblock %}
 
 {% block page_title %}{{ titulo_form }}{% endblock %}
 
 {% block content %}
-<form method="POST">
-    <div class="form-group">
-        <label for="nome_evento">Nome do Evento:</label>
-        <input type="text" class="form-control"  id="nome_evento" name="nome_evento" value="{{ evento_dados.nome_evento if evento_dados else '' }}" required>
+<div class="card">
+    <div class="card-body">
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }} <div class="form-group">
+                {{ form.nome_evento.label(class="font-weight-bold") }}
+                {{ form.nome_evento(class="form-control" + (" is-invalid" if form.nome_evento.errors else "")) }}
+                {% for error in form.nome_evento.errors %}<span class="invalid-feedback">{{ error }}</span>{% endfor %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    {{ form.data_hora_evento.label(class="font-weight-bold") }}
+                    {{ form.data_hora_evento(class="form-control") }}
+                </div>
+                <div class="form-group col-md-6">
+                    {{ form.palestrante.label(class="font-weight-bold") }}
+                    {{ form.palestrante(class="form-control") }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form.imagem_palestrante.label(class="font-weight-bold") }}
+                {{ form.imagem_palestrante(class="form-control", placeholder="https://exemplo.com/imagem.jpg") }}
+                {% for error in form.imagem_palestrante.errors %}<span class="invalid-feedback d-block">{{ error }}</span>{% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.descricao.label(class="font-weight-bold") }}
+                {{ form.descricao(class="form-control", rows=4) }}
+            </div>
+
+            <div class="form-group">
+                {{ form.local_evento.label(class="font-weight-bold") }}
+                {{ form.local_evento(class="form-control") }}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    {{ form.preco.label(class="font-weight-bold") }}
+                    {{ form.preco(class="form-control") }}
+                </div>
+                <div class="form-group col-md-6">
+                    {{ form.numero_vagas.label(class="font-weight-bold") }}
+                    {{ form.numero_vagas(class="form-control") }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form.pix_copia_e_cola.label(class="font-weight-bold") }}
+                {{ form.pix_copia_e_cola(class="form-control", rows=5, placeholder="Cole aqui a chave Pix gerada pelo seu banco...") }}
+                {% if form.pix_copia_e_cola.description %}<small class="form-text text-muted">{{ form.pix_copia_e_cola.description }}</small>{% endif %}
+            </div>
+
+            <hr>
+
+            <div class="form-group">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('admin.gerenciar_eventos') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
     </div>
-    <div class="form-group">
-        <label for="data_hora_evento">Data e Hora:</label>
-        <input type="datetime-local" class="form-control "  id="data_hora_evento" name="data_hora_evento" value="{{ data_para_form if data_para_form else '' }}" required>
-    </div>
-    <div class="form-group">
-        <label for="palestrante">Palestrante:</label>
-        <input type="text" class="form-control "  id="palestrante" name="palestrante" value="{{ evento_dados.palestrante if evento_dados else '' }}">
-    </div>
-    <div class="form-group">
-        <label for="descricao">Descrição:</label>
-        <textarea class="form-control " id="descricao" name="descricao">{{ evento_dados.descricao if evento_dados else '' }}</textarea>
-    </div>
-    <div class="form-group">
-        <label for="local_evento">Local:</label>
-        <input type="text" class="form-control " id="local_evento" name="local_evento" value="{{ evento_dados.local_evento if evento_dados else '' }}">
-    </div>
-    <div class="form-group">
-        <label for="preco">Preço (R$):</label>
-        <input type="text" class="form-control" step="0.01" min="0" id="preco" name="preco" value="{{ evento_dados.preco if evento_dados else '0.00' }}">
-    </div>
-    <div class="form-group">
-        <label for="numero_vagas">Número de Vagas:</label>
-        <input type="text" class="form-control " min="0" id="numero_vagas" name="numero_vagas" value="{{ evento_dados.numero_vagas if evento_dados else '' }}" required>
-    </div>
-    <div class="form-group">
-        <input type="submit" value="{{ 'Salvar Alterações' if 'Editar' in titulo_form else 'Cadastrar Evento' }}" class="btn btn-primary">
-        <a href="{{ url_for('admin.gerenciar_eventos') }}" class="btn btn-secondary">Cancelar</a>
-    </div>
-</form>
+</div>
 {% endblock %}

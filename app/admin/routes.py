@@ -7,7 +7,7 @@ from datetime import datetime
 from . import bp  # Importa o 'bp' do __init__.py do admin
 from .. import db  # '..' sobe um nível para o pacote 'app' para pegar o 'db'
 from ..models import Evento, Equipe, Inscricao, User
-from .forms import EditarInscricaoForm # 'from .' pois assumo que forms.py está na mesma pasta admin
+from .forms import EditarInscricaoForm, EventoForm # 'from .' pois assumo que forms.py está na mesma pasta admin
 from flask import jsonify
 from sqlalchemy.orm import joinedload
 
@@ -177,60 +177,42 @@ def listar_inscricoes_evento(evento_id):
 
 
 @bp.route('/eventos/novo', methods=['GET', 'POST'])
-@admin_required
+@login_required
 def novo_evento():
-    if request.method == 'POST':
-        # Pega os dados do formulário
-        nome_evento = request.form['nome_evento']
-        data_hora_string = request.form['data_hora_evento']
-        palestrante = request.form.get('palestrante')
-        descricao = request.form.get('descricao')
-        local_evento = request.form.get('local_evento')
-
-        # Validações e conversões
+    form = EventoForm()
+    if form.validate_on_submit():
+        novo_evento = Evento()
+        form.populate_obj(novo_evento)  # Popula o objeto com os dados do form
         try:
-            data_hora_evento = datetime.strptime(data_hora_string, '%Y-%m-%dT%H:%M')
-            preco = float(request.form.get('preco', '0').replace(',', '.'))
-            numero_vagas = int(request.form['numero_vagas'])
-        except ValueError:
-            flash('Dados numéricos ou de data inválidos.', 'danger')
-            return render_template('admin/admin_form_evento.html', titulo_form="Novo Evento")
+            db.session.add(novo_evento)
+            db.session.commit()
+            flash('Evento cadastrado com sucesso!', 'success')
+            return redirect(url_for('admin.gerenciar_eventos'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao cadastrar evento: {e}', 'danger')
 
-        novo_evento = Evento(
-            nome_evento=nome_evento, data_hora_evento=data_hora_evento, palestrante=palestrante,
-            descricao=descricao, local_evento=local_evento, preco=preco, numero_vagas=numero_vagas
-        )
-        db.session.add(novo_evento)
-        db.session.commit()
-        flash('Evento cadastrado com sucesso!', 'success')
-        return redirect(url_for('admin.gerenciar_eventos'))
-
-    # Se GET, apenas mostra o formulário
-    return render_template('admin/admin_form_evento.html', titulo_form="Novo Evento")
+    return render_template('admin/admin_form_evento.html', titulo_form="Novo Evento", form=form)
 
 
-@bp.route('/eventos/<int:evento_id>/editar', methods=['GET', 'POST'])
-@admin_required
+@bp.route('/eventos/editar/<int:evento_id>', methods=['GET', 'POST'])
+@login_required
 def editar_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
-    if request.method == 'POST':
-        # Atualiza os dados do objeto 'evento' com os dados do formulário
-        evento.nome_evento = request.form['nome_evento']
-        evento.data_hora_evento = datetime.strptime(request.form['data_hora_evento'], '%Y-%m-%dT%H:%M')
-        evento.palestrante = request.form.get('palestrante')
-        evento.descricao = request.form.get('descricao')
-        evento.local_evento = request.form.get('local_evento')
-        evento.preco = float(request.form.get('preco', '0').replace(',', '.'))
-        evento.numero_vagas = int(request.form['numero_vagas'])
+    # Passamos obj=evento para que o WTForms preencha o formulário com os dados do evento automaticamente
+    form = EventoForm(obj=evento)
 
-        db.session.commit()
-        flash('Evento atualizado com sucesso!', 'success')
-        return redirect(url_for('admin.gerenciar_eventos'))
+    if form.validate_on_submit():
+        form.populate_obj(evento)  # Atualiza o objeto com os dados do form
+        try:
+            db.session.commit()
+            flash('Evento atualizado com sucesso!', 'success')
+            return redirect(url_for('admin.gerenciar_eventos'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar evento: {e}', 'danger')
 
-    # No GET, formata a data para preencher o campo datetime-local corretamente
-    data_para_form = evento.data_hora_evento.strftime('%Y-%m-%dT%H:%M')
-    return render_template('admin/admin_form_evento.html', titulo_form="Editar Evento", evento_dados=evento,
-                           data_para_form=data_para_form)
+    return render_template('admin/admin_form_evento.html', titulo_form="Editar Evento", form=form)
 
 
 @bp.route('/eventos/<int:evento_id>/excluir', methods=['POST'])
