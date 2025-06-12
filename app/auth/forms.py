@@ -41,7 +41,7 @@ class EditarPerfilForm(FlaskForm):
 
 class RegistrationForm(FlaskForm):
     """Formulário para novos utilizadores se registarem."""
-    username = StringField('Nome de Utilizador', validators=[DataRequired(), Length(min=3, max=64)])
+    username = StringField('Nome usuário', validators=[DataRequired(), Length(min=3, max=64)])
     email = StringField('Email', validators=[DataRequired(), Email()])
     nome_completo = StringField('Nome Completo', validators=[DataRequired(), Length(max=150)])
     cpf = StringField('CPF', validators=[DataRequired(), Length(min=11, max=14)])
@@ -55,7 +55,7 @@ class RegistrationForm(FlaskForm):
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()
         if user is not None:
-            raise ValidationError('Este nome de utilizador já existe. Por favor, escolha outro.')
+            raise ValidationError('Este nome de usuário já existe. Por favor, escolha outro.')
 
     # Validador personalizado para garantir que o email não existe
     def validate_email(self, email):
