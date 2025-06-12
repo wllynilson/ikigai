@@ -341,3 +341,22 @@ body {
 .event-card:nth-child(3) {
     animation-delay: 0.2s;
 }
+
+@media (max-width: 576px) {
+    .hero-title {
+        font-size: 2rem; /* Reduz um pouco mais o título principal */
+    }
+    .hero-subtitle {
+        font-size: 1.1rem; /* Reduz o subtítulo */
+    }
+    .container-fluid {
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+    }
+    .event-body, .event-footer {
+        padding: 1.25rem; /* Menos padding interno nos cards */
+    }
+    .about-section {
+        padding: 2.5rem 1.5rem;
+    }
+}

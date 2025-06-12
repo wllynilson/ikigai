@@ -106,33 +106,46 @@ body {
 /* 6. Responsividade para Telas Pequenas (ex: telemóveis) */
 @media (max-width: 768px) {
     .admin-wrapper {
-        flex-direction: column; /* Empilha os itens verticalmente */
+        flex-direction: column;
     }
 
     .sidebar {
-        width: 100%; /* Ocupa a largura toda */
-        min-height: auto; /* A altura será automática */
+        width: 100vw;
+        min-height: auto;
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 20px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-items: flex-start;
+        padding: 8px 4px;
+        box-sizing: border-box;
+        overflow-x: auto;
+        gap: 4px;
     }
 
     .sidebar h2 {
         margin-bottom: 0;
-        font-size: 1.2rem;
+        font-size: 1rem;
         border-bottom: none;
+        padding-bottom: 0;
+        text-align: left;
+        flex-basis: 100%;
+        order: -1;
     }
 
     .sidebar a {
-        padding: 8px;
+        padding: 6px 8px;
         margin-bottom: 0;
+        font-size: 0.95rem;
+        min-width: 44px;
+        min-height: 44px;
+        justify-content: center;
     }
-    .sidebar a span { /* Esconde o texto dos links, mostrando só os ícones */
+    .sidebar a span {
         display: none;
     }
 
     .main-content {
-        padding: 20px;
+        padding: 10px 2vw;
     }
 }

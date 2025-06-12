@@ -5,36 +5,42 @@
 {% block page_title %}Gerenciar Eventos{% endblock %}
 
 {% block content %}
-<p>Aqui você pode visualizar, editar, excluir eventos e ver os participantes inscritos.</p>
-<a href="{{ url_for('admin.novo_evento') }}" class="btn btn-primary" style="margin-bottom: 20px;">+ Novo Evento</a>
-{% if eventos %}
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Nome do Evento</th>
-                <th>Data</th>
-                <th>Vagas Preenchidas</th>
-                <th>Vagas Restantes</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for evento_item in eventos %}
-            <tr>
-                <td>{{ evento_item.nome_evento }}</td>
-                <td>{{ evento_item.data_hora_evento.strftime('%d/%m/%Y %H:%M') }}</td>
-                <td>{{ evento_item.inscricoes|length }} / {{ evento_item.numero_vagas + evento_item.inscricoes|length }}</td>
-                <td>{{ evento_item.numero_vagas }}</td>
-                <td class="action-links">
-                    <a href="{{ url_for('admin.listar_inscricoes_evento', evento_id=evento_item.id) }}" class="btn btn-info btn-sm">Ver Inscritos ({{ evento_item.inscricoes|length }})</a>
-                    <a href="{{ url_for('admin.editar_evento', evento_id=evento_item.id) }}" class="btn btn-warning btn-sm">Editar</a>
-                    <a href="{{ url_for('admin.excluir_evento', evento_id=evento_item.id) }}" class="btn btn-danger btn-sm">Excluir</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% else %}
-    <p>Nenhum evento cadastrado.</p>
-{% endif %}
+    <p>Aqui você pode visualizar, editar, excluir eventos e ver os participantes inscritos.</p>
+    <a href="{{ url_for('admin.novo_evento') }}" class="btn btn-primary" style="margin-bottom: 20px;">+ Novo Evento</a>
+    {% if eventos %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                <tr>
+                    <th>Nome do Evento</th>
+                    <th>Data</th>
+                    <th>Vagas Preenchidas</th>
+                    <th>Vagas Restantes</th>
+                    <th>Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for evento_item in eventos %}
+                    <tr>
+                        <td>{{ evento_item.nome_evento }}</td>
+                        <td>{{ evento_item.data_hora_evento.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ evento_item.inscricoes|length }}
+                            / {{ evento_item.numero_vagas + evento_item.inscricoes|length }}</td>
+                        <td>{{ evento_item.numero_vagas }}</td>
+                        <td class="action-links">
+                            <a href="{{ url_for('admin.listar_inscricoes_evento', evento_id=evento_item.id) }}"
+                               class="btn btn-info btn-sm">Ver Inscritos ({{ evento_item.inscricoes|length }})</a>
+                            <a href="{{ url_for('admin.editar_evento', evento_id=evento_item.id) }}"
+                               class="btn btn-warning btn-sm">Editar</a>
+                            <a href="{{ url_for('admin.excluir_evento', evento_id=evento_item.id) }}"
+                               class="btn btn-danger btn-sm">Excluir</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>Nenhum evento cadastrado.</p>
+    {% endif %}
 {% endblock %}
