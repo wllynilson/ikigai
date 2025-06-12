@@ -38,19 +38,27 @@ def inscrever_evento(evento_id):
                               Equipe.query.order_by('nome_equipe').all()]
 
     if form.validate_on_submit():
+        # --- INÍCIO DA LÓGICA ALTERADA ---
+
+        # Primeiro, criamos e salvamos a inscrição
         nova_inscricao = Inscricao(
             user_id=current_user.id,
             evento_id=evento.id,
             equipe_id=form.equipe_id.data
-            # O status será 'Pendente' por defeito
         )
-        # Opcional: Decrementar o número de vagas
-        # evento.numero_vagas -= 1
         db.session.add(nova_inscricao)
         db.session.commit()
-        flash(
-            f'Inscrição no evento "{evento.nome_evento}" realizada com sucesso! O seu status está pendente de aprovação.',
-            'success')
+
+        # Agora, verificamos se o evento é pago e tem uma chave Pix
+        if evento.preco > 0 and evento.pix_copia_e_cola:
+            # Se sim, usamos uma categoria especial no flash para ativar o JavaScript
+            # A mensagem do flash será a própria chave Pix!
+            flash(evento.pix_copia_e_cola, 'show_pix_modal')
+        else:
+            # Se não, mostramos uma mensagem de sucesso normal
+            flash(f'Inscrição no evento "{evento.nome_evento}" realizada com sucesso!', 'success')
+
         return redirect(url_for('public.index'))
+        # --- FIM DA LÓGICA ALTERADA ---
 
     return render_template('inscrever_evento.html', title=f"Inscrição: {evento.nome_evento}", form=form, evento=evento)
