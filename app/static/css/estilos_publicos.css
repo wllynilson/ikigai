@@ -746,3 +746,30 @@ body {
 .detail-item:nth-child(3) { animation-delay: 0.2s; }
 .detail-item:nth-child(4) { animation-delay: 0.3s; }
 .detail-item:nth-child(5) { animation-delay: 0.4s; }
+
+/* Estilos para o Botão Flutuante do WhatsApp */
+.whatsapp-fab {
+    position: fixed; /* Fica fixo na tela durante o scroll */
+    width: 60px;
+    height: 60px;
+    bottom: 40px; /* Distância da parte de baixo */
+    right: 40px;  /* Distância da parte da direita */
+    background-color: #25D366; /* Cor oficial do WhatsApp */
+    color: #FFF; /* Cor do ícone (branco) */
+    border-radius: 50%; /* Deixa o botão redondo */
+    text-align: center;
+    font-size: 30px; /* Tamanho do ícone */
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.25);
+    z-index: 1000; /* Garante que fique por cima de outros elementos */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.whatsapp-fab:hover {
+    transform: scale(1.1); /* Efeito de zoom ao passar o rato */
+    color: #FFF;
+    box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.3);
+}
