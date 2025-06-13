@@ -61,6 +61,13 @@ def create_app(config_class=Config):
             db.create_all()
             click.echo("Banco de dados inicializado com sucesso.")
 
+        # --- Injetor de Contexto para o Ano Atual ---
+        @app.context_processor
+        def inject_current_year():
+            from datetime import datetime
+            return {'current_year': datetime.utcnow().year}
+        # --- Fim do Injetor ---
+
     return app
 
 # 7. Importar modelos e definir o user_loader (fora da factory)

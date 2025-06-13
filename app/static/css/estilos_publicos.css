@@ -773,3 +773,23 @@ body {
     color: #FFF;
     box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.3);
 }
+
+.site-footer {
+    padding: 2.5rem 0;
+    background-color: #e9ecef; /* Um cinza muito claro, quase branco */
+    border-top: 1px solid #dee2e6; /* Uma linha subtil no topo */
+    font-size: 0.9rem;
+    color: #6c757d; /* Cor de texto 'muted' do Bootstrap */
+}
+
+.developer-credit a {
+    color: #495057; /* Uma cor de link um pouco mais escura, mas ainda discreta */
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.developer-credit a:hover {
+    color: var(--primary-red); /* O link fica com a cor da sua marca ao passar o rato */
+    text-decoration: none;
+}
