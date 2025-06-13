@@ -1,4 +1,14 @@
-# Ficheiro: app/__init__.py (VERSÃO CORRIGIDA E OTIMIZADA)
+import locale
+
+try:
+    # Define o locale para Português do Brasil para toda a aplicação
+    # Isto irá afetar a formatação de datas, moedas, etc.
+    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+except locale.Error:
+    # Fallback para o locale padrão do sistema se pt_BR.UTF-8 não estiver instalado
+    print("Locale pt_BR.UTF-8 não encontrado, usando o padrão do sistema.")
+    locale.setlocale(locale.LC_ALL, '')
+
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -15,7 +25,7 @@ login_manager = LoginManager()
 
 # 2. Configuração do LoginManager (as configurações que não dependem da 'app' podem ser feitas aqui)
 login_manager.login_view = 'auth.login'
-login_manager.login_message = "Por favor, faça login para aceder a esta página."
+login_manager.login_message = "Por favor, faça login para acessar a esta página."
 login_manager.login_message_category = "info"
 
 

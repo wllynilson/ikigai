@@ -2,81 +2,86 @@
 {% block title %}Bem-vindo à Ikigai Combat{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-md-5 px-3">
+    <div class="container-fluid px-md-5 px-3">
 
 
-    <div class="hero-section">
-        <div class="hero-content">
-            <h1 class="hero-title">Bem-vindo à Ikigai Combat</h1>
-            <p class="hero-subtitle">O seu propósito em forma de evento. Conectamos pessoas, paixões e conhecimento.</p>
-            <p class="hero-description">Explore os nossos próximos eventos e encontre o seu lugar na nossa comunidade.</p>
-            <a class="btn btn-hero" href="#eventos" role="button">Ver Eventos</a>
+        <div class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">Bem-vindo à Ikigai Combat</h1>
+                <p class="hero-subtitle">O seu propósito em forma de evento. Conectamos pessoas, paixões e
+                    conhecimento.</p>
+                <p class="hero-description">Explore os nossos próximos eventos e encontre o seu lugar na nossa
+                    comunidade.</p>
+                <a class="btn btn-hero" href="#eventos" role="button">Ver Eventos</a>
+            </div>
         </div>
-    </div>
 
-    <div id="eventos" class="mt-5">
-        <h2 class="about-title mb-5">Próximos Eventos</h2>
-        {% if eventos %}
-            <div class="events-grid">
-                {% for evento in eventos %}
-                    <div class="event-card">
-                        <img src="{{ evento.imagem_palestrante or url_for('static', filename='images/default-event.jpg') }}"
-                             class="event-image"
-                             alt="Imagem do evento {{ evento.nome_evento }}">
+        <div id="eventos" class="mt-5">
+            <h2 class="about-title mb-5">Próximos Eventos</h2>
+            {% if eventos %}
+                <div class="events-grid">
+                    {% for evento in eventos %}
+                        <div class="event-card position-relative">
+                            <img src="{{ evento.imagem_palestrante or url_for('static', filename='images/default-event.jpg') }}"
+                                 class="event-image"
+                                 alt="Imagem do evento {{ evento.nome_evento }}">
 
-                        <div class="event-body">
-                            <h5 class="event-title">{{ evento.nome_evento }}</h5>
+                            <div class="event-body">
+                                <h6 class="event-title">
+                                    <a href="{{ url_for('public.detalhe_evento', evento_id=evento.id) }}"
+                                       class="stretched-link">
+                                        {{ evento.nome_evento }}
+                                    </a>
+                                </h6>
 
-                            {% if evento.palestrante %}
-                                <div class="event-speaker">
-                                    <i class="fas fa-user-tie"></i>
-                                    {{ evento.palestrante }}
-                                </div>
-                            {% endif %}
+                                {% if evento.palestrante %}
+                                    <div class="event-speaker">
+                                        <i class="fas fa-user-tie"></i>
+                                        {{ evento.palestrante }}
+                                    </div>
+                                {% endif %}
 
-                            <p class="event-description">{{ evento.descricao|truncate(120) }}</p>
+                                <p class="event-description">{{ evento.descricao|truncate(120) }}</p>
 
-                            <div class="event-details">
-                                <div class="event-detail-item">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    {{ evento.data_hora_evento.strftime('%d de %b, %Y às %H:%M') }}
-                                </div>
-                                <div class="event-detail-item">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    {{ evento.local_evento or 'Local a definir' }}
+                                <div class="event-details">
+                                    <div class="event-detail-item">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        {{ evento.data_hora_evento.strftime('%d de %b, %Y às %H:%M') }}
+                                    </div>
+                                    <div class="event-detail-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        {{ evento.local_evento or 'Local a definir' }}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="event-footer">
-                            <span class="event-price">
-                                {% if evento.preco > 0 %}
-                                    R$ {{ "%.2f"|format(evento.preco|float) }}
-                                {% else %}
-                                    Gratuito
-                                {% endif %}
-                            </span>
-                            <a href="{{ url_for('public.inscrever_evento', evento_id=evento.id) }}"
-                               class="btn-subscribe">Inscrever-se</a>
+                            <div class="event-footer">
+            <span class="event-price">
+                </span>
+                                <a href="{{ url_for('public.inscrever_evento', evento_id=evento.id) }}"
+                                   class="btn-subscribe">Inscrever-se</a>
+                            </div>
                         </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="no-events">
-                <i class="fas fa-calendar-times fa-3x mb-3" style="color: var(--primary-red);"></i>
-                <p>Nenhum evento programado no momento. Volte em breve!</p>
-            </div>
-        {% endif %}
-    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-events">
+                    <i class="fas fa-calendar-times fa-3x mb-3" style="color: var(--primary-red);"></i>
+                    <p>Nenhum evento programado no momento. Volte em breve!</p>
+                </div>
+            {% endif %}
+        </div>
 
-    <div id="sobre" class="about-section">
-        <h2 class="about-title">Sobre a Ikigai</h2>
-        <p class="about-text">
-            Cada evento da Ikigai é pensado para inspirar. Valorizamos os detalhes, a experiência humana e o impacto social.
-            Buscamos envolver comunidades locais, incentivar novos talentos e proporcionar momentos que despertem conhecimento, emoção e pertencimento.
-            Do planejamento à execução, tudo é feito com o mesmo princípio que nos deu nome: criar algo que tenha propósito, valor e faça sentido para quem participa.
-        </p>
+        <div id="sobre" class="about-section">
+            <h2 class="about-title">Sobre a Ikigai</h2>
+            <p class="about-text">
+                Cada evento da Ikigai é pensado para inspirar. Valorizamos os detalhes, a experiência humana e o impacto
+                social.
+                Buscamos envolver comunidades locais, incentivar novos talentos e proporcionar momentos que despertem
+                conhecimento, emoção e pertencimento.
+                Do planejamento à execução, tudo é feito com o mesmo princípio que nos deu nome: criar algo que tenha
+                propósito, valor e faça sentido para quem participa.
+            </p>
+        </div>
     </div>
-</div>
 {% endblock %}

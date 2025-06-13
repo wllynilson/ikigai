@@ -62,3 +62,9 @@ def inscrever_evento(evento_id):
         # --- FIM DA LÓGICA ALTERADA ---
 
     return render_template('inscrever_evento.html', title=f"Inscrição: {evento.nome_evento}", form=form, evento=evento)
+
+@public_bp.route('/evento/<int:evento_id>')
+def detalhe_evento(evento_id):
+    """Exibe a página de detalhes para um único evento."""
+    evento = Evento.query.get_or_404(evento_id)
+    return render_template('detalhe_evento.html', titulo=evento.nome_evento, evento=evento)

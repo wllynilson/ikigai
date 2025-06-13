@@ -104,11 +104,10 @@ body {
 }
 
 /* Cards dos eventos */
-.events-grid {
+#eventos .events-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 2rem;
-    margin-bottom: 3rem;
 }
 
 .event-card {
@@ -128,9 +127,11 @@ body {
 
 .event-image {
     width: 100%;
-    height: 200px;
+    height: 270px;
     object-fit: cover;
+    background: #fafafa;
     border-bottom: 3px solid var(--light-red);
+    display: block;
 }
 
 .event-body {
@@ -142,7 +143,7 @@ body {
 
 .event-title {
     color: var(--primary-red);
-    font-size: 1.3rem;
+    font-size: 1.9rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
     line-height: 1.3;
@@ -360,3 +361,388 @@ body {
         padding: 2.5rem 1.5rem;
     }
 }
+
+/* Estilo para o card clicável */
+a.card-link, a.card-link:hover {
+    color: inherit; /* Herda a cor do texto, removendo o azul do link */
+    text-decoration: none; /* Remove o sublinhado do link */
+}
+
+
+:root {
+    --primary-red: rgb(214, 58, 38);
+    --primary-white: rgb(234, 234, 234);
+    --dark-red: rgb(180, 45, 28);
+    --light-red: rgba(214, 58, 38, 0.1);
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    --border-radius: 12px;
+}
+
+body {
+    background: linear-gradient(135deg, var(--primary-white) 0%, #f8f9fa 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Hero Header com Imagem */
+.event-hero {
+    position: relative;
+    height: 60vh;
+    min-height: 400px;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.event-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg,
+        rgba(214, 58, 38, 0.8) 0%,
+        rgba(180, 45, 28, 0.9) 100%);
+    z-index: 1;
+}
+
+.event-hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: white;
+    padding: 2rem;
+    max-width: 800px;
+}
+
+.event-speaker {
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    margin-bottom: 0;
+    opacity: 0.95;
+    font-weight: 300;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Container Principal */
+.event-content {
+    padding: 3rem 0;
+    margin-top: -2rem;
+    position: relative;
+    z-index: 3;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Seção de Descrição */
+.event-description {
+    background: white;
+    padding: 2.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    position: relative;
+}
+
+.event-description::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-red), var(--dark-red));
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.section-title {
+    color: var(--primary-red);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, var(--light-red), transparent);
+}
+
+.event-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #444;
+    white-space: pre-wrap;
+}
+
+/* Card de Detalhes */
+.details-card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+}
+
+.details-header {
+    background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.details-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.details-body {
+    padding: 2rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--primary-white);
+    border-radius: 8px;
+    border-left: 4px solid var(--light-red);
+    transition: all 0.3s ease;
+}
+
+.detail-item:hover {
+    border-left-color: var(--primary-red);
+    transform: translateX(2px);
+}
+
+.detail-item:last-child {
+    margin-bottom: 0;
+}
+
+.detail-icon {
+    color: var(--primary-red);
+    font-size: 1.2rem;
+    width: 20px;
+    text-align: center;
+    margin-top: 2px;
+}
+
+.detail-content {
+    flex: 1;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.detail-value {
+    color: #666;
+    font-size: 1rem;
+}
+
+.price-item {
+    background: var(--light-red);
+    border-left-color: var(--primary-red);
+}
+
+.price-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--primary-red);
+}
+
+/* Botão de Inscrição */
+.subscribe-section {
+    padding: 1.5rem 2rem 2rem;
+    background: var(--primary-white);
+    border-top: 1px solid #eee;
+}
+
+.btn-subscribe {
+    background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(214, 58, 38, 0.3);
+}
+
+.btn-subscribe:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(214, 58, 38, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-subscribe:active {
+    transform: translateY(0);
+}
+
+/* Botão Voltar */
+.back-button {
+    position: fixed;
+    top: 2rem;
+    left: 2rem;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--primary-red);
+    border: 2px solid var(--primary-red);
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.back-button:hover {
+    background: var(--primary-red);
+    color: white;
+    text-decoration: none;
+    transform: translateX(-2px);
+}
+
+/* Responsividade */
+@media (max-width: 1024px) {
+    .content-grid {
+        grid-template-columns: 1fr 350px;
+        gap: 2rem;
+    }
+
+    .details-card {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .event-hero {
+        height: 50vh;
+        min-height: 300px;
+        background-attachment: scroll;
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 0 1rem;
+    }
+
+    .event-description {
+        padding: 2rem;
+    }
+
+    .details-body {
+        padding: 1.5rem;
+    }
+
+    .subscribe-section {
+        padding: 1.5rem;
+    }
+
+    .back-button {
+        top: 1rem;
+        left: 1rem;
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .event-hero {
+        height: 40vh;
+        min-height: 250px;
+    }
+
+    .event-hero-content {
+        padding: 1rem;
+    }
+
+    .event-description {
+        padding: 1.5rem;
+    }
+
+    .details-body {
+        padding: 1rem;
+    }
+
+    .detail-item {
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+
+    .section-title {
+        font-size: 1.6rem;
+    }
+
+    .back-button {
+        position: static;
+        margin: 1rem;
+        width: fit-content;
+    }
+}
+
+/* Animações */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.event-description,
+.details-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.details-card {
+    animation-delay: 0.2s;
+}
+
+.detail-item {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+.detail-item:nth-child(2) { animation-delay: 0.1s; }
+.detail-item:nth-child(3) { animation-delay: 0.2s; }
+.detail-item:nth-child(4) { animation-delay: 0.3s; }
+.detail-item:nth-child(5) { animation-delay: 0.4s; }

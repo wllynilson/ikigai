@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}{{ evento.nome_evento }}{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('public.index') }}" class="back-button">
+    <i class="fas fa-arrow-left"></i>
+    Voltar
+</a>
+
+<div class="event-hero" style="background-image: url('{{ evento.imagem_palestrante or 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDR8fGV2ZW50JTIwbWVldGluZ3xlbnwwfHx8fDE2MjkzNDg5MDI&ixlib=rb-1.2.1&q=80&w=1200' }}');">
+    <div class="event-hero-content">
+        <h1 class="event-title">{{ evento.nome_evento }}</h1>
+        {% if evento.palestrante %}
+            <p class="event-speaker">com {{ evento.palestrante }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="event-content">
+    <div class="content-grid">
+        <div class="event-description">
+            <h2 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Sobre o Evento
+            </h2>
+            <p class="event-text">{{ evento.descricao }}</p>
+        </div>
+
+        <div class="details-card">
+            <div class="details-header">
+                <h3 class="details-title">Informações do Evento</h3>
+            </div>
+
+            <div class="details-body">
+                <div class="detail-item">
+                    <i class="detail-icon fas fa-calendar-alt"></i>
+                    <div class="detail-content">
+                        <div class="detail-label">Data</div>
+                        <div class="detail-value">{{ evento.data_hora_evento.strftime('%d de %B, %Y') }}</div>
+                    </div>
+                </div>
+
+                <div class="detail-item">
+                    <i class="detail-icon fas fa-clock"></i>
+                    <div class="detail-content">
+                        <div class="detail-label">Horário</div>
+                        <div class="detail-value">{{ evento.data_hora_evento.strftime('%H:%M') }}h</div>
+                    </div>
+                </div>
+
+                <div class="detail-item">
+                    <i class="detail-icon fas fa-map-marker-alt"></i>
+                    <div class="detail-content">
+                        <div class="detail-label">Local</div>
+                        <div class="detail-value">{{ evento.local_evento or 'Local a definir' }}</div>
+                    </div>
+                </div>
+
+                <div class="detail-item">
+                    <i class="detail-icon fas fa-users"></i>
+                    <div class="detail-content">
+                        <div class="detail-label">Vagas Disponíveis</div>
+                        <div class="detail-value">{{ evento.numero_vagas }} pessoas</div>
+                    </div>
+                </div>
+
+                <div class="detail-item price-item">
+                    <i class="detail-icon fas fa-tag"></i>
+                    <div class="detail-content">
+                        <div class="detail-label">Investimento</div>
+                        <div class="detail-value price-value">
+                            {% if evento.preco > 0 %}
+                                R$ {{ ("%.2f"|format(evento.preco|float))|replace('.', ',') }}
+                            {% else %}
+                                Gratuito
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subscribe-section">
+                <a href="{{ url_for('public.inscrever_evento', evento_id=evento.id) }}" class="btn-subscribe">
+                    <i class="fas fa-ticket-alt mr-2"></i>
+                    Inscrever-se Agora
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
