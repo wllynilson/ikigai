@@ -10,6 +10,7 @@ from ..models import Evento, Equipe, Inscricao, User
 from .forms import EditarInscricaoForm, EventoForm # 'from .' pois assumo que forms.py está na mesma pasta admin
 from flask import jsonify
 from sqlalchemy.orm import joinedload
+import secrets
 
 
 # --- LOGIN AUTOMÁTICO EM DESENVOLVIMENTO ---
@@ -385,3 +386,42 @@ def editar_inscricao(inscricao_id):
     return render_template('admin/admin_editar_inscricao.html',
                            titulo='Editar Inscrição',
                            form=form)
+
+
+@bp.route('/usuarios')
+@admin_required
+def gerenciar_usuarios():
+    """Lista todos os utilizadores para gerenciamento."""
+    page = request.args.get('page', 1, type=int)
+    usuarios_paginados = User.query.order_by(User.username).paginate(
+        page=page, per_page=15, error_out=False
+    )
+    return render_template('admin/admin_gerenciar_usuarios.html',
+                           titulo="Administração de Usuários",
+                           usuarios_paginados=usuarios_paginados)
+
+
+@bp.route('/usuario/<int:user_id>/resetar-senha', methods=['POST'])
+@admin_required
+def resetar_senha_usuario(user_id):
+    user = User.query.get_or_404(user_id)
+
+    # Evita que um admin resete a própria senha por esta rota
+    if user == current_user:
+        flash('Não pode resetar a sua própria senha por este método.', 'warning')
+        return redirect(url_for('admin.gerenciar_usuarios'))
+
+    try:
+        # Gera uma nova senha segura e temporária
+        nova_senha = f"ikigai@"
+
+        user.set_password(nova_senha)
+        db.session.commit()
+
+        # CRÍTICO: Informa ao admin a nova senha para que ele possa passá-la ao utilizador
+        flash(f"A senha para o utilizador '{user.username}' foi resetada para: {nova_senha}", 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Ocorreu um erro ao resetar a senha: {str(e)}", 'danger')
+
+    return redirect(url_for('admin.gerenciar_usuarios'))

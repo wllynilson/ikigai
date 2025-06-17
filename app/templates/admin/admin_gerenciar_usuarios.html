@@ -1,0 +1,49 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Nome Completo</th>
+                        <th>Role</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in usuarios_paginados.items %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.nome_completo or 'Não preenchido' }}</td>
+                        <td><span class="badge badge-pill {{ 'badge-danger' if user.role == 'admin' else 'badge-secondary' }}">{{ user.role }}</span></td>
+                        <td class="text-center">
+                            {% if user.id != current_user.id %}
+                            <form method="POST" action="{{ url_for('admin.resetar_senha_usuario', user_id=user.id) }}" 
+                                  onsubmit="return confirm('Tem a certeza que deseja resetar a senha para este usuário? Uma nova senha será gerada.');">
+                                <button type="submit" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-key"></i> Resetar Senha
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-muted"> (Você) </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
