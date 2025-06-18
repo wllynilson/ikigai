@@ -42,14 +42,22 @@ class Inscricao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data_inscricao = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(20), nullable=False, default='Pendente')
+
+    nome_participante = db.Column(db.String(100), nullable=True)
+    sobrenome_participante = db.Column(db.String(100), nullable=True)
+    idade = db.Column(db.Integer, nullable=True)
+    cpf = db.Column(db.String(14), nullable=True)
+    telefone = db.Column(db.String(20), nullable=True)
+    # ----------------------------------------------------------------
     # --- As 3 conexões essenciais ---
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
     equipe_id = db.Column(db.Integer, db.ForeignKey('equipes.id'), nullable=False)
+    # Reintroduz a regra de negócio para evitar duplicados
+    # __table_args__ = (db.UniqueConstraint('cpf', 'evento_id', name='uq_cpf_por_evento'),)
 
     def __repr__(self):
-        return f'<Inscricao {self.id} do utilizador {self.user_id}>'
-
+        return f'<Inscricao de {self.nome_participante or self.id}>'
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
