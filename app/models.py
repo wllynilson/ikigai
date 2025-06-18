@@ -46,6 +46,9 @@ class Inscricao(db.Model):
     nome_participante = db.Column(db.String(100), nullable=True)
     sobrenome_participante = db.Column(db.String(100), nullable=True)
     idade = db.Column(db.Integer, nullable=True)
+    peso = db.Column(db.Float, nullable=True)
+    graduacao = db.Column(db.String(50), nullable=True)
+    professor_responsavel = db.Column(db.String(100), nullable=True)
     cpf = db.Column(db.String(14), nullable=True)
     telefone = db.Column(db.String(20), nullable=True)
     # ----------------------------------------------------------------
