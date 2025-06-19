@@ -6,12 +6,13 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.fields.simple import TextAreaField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
 from wtforms.validators import Length, Optional, URL
+from wtforms.fields import EmailField
 
 from app.models import User
 
 
 class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email(message="Por favor, insira um email válido.")])
+    email = EmailField('Email', validators=[DataRequired(), Email(message="Por favor, insira um email válido.")])
     password = PasswordField('Senha', validators=[DataRequired()])
     remember_me = BooleanField('Lembrar-me')
     submit = SubmitField('Entrar')
@@ -42,7 +43,7 @@ class EditarPerfilForm(FlaskForm):
 class RegistrationForm(FlaskForm):
     """Formulário para novos utilizadores se registarem."""
     username = StringField('Nome usuário', validators=[DataRequired(), Length(min=3, max=64)])
-    email = StringField('Email', validators=[DataRequired(), Email()])
+    email = EmailField('Email', validators=[DataRequired(),  Email(message="Por favor, insira um email válido.")])
     nome_completo = StringField('Nome Completo', validators=[DataRequired(), Length(max=150)])
     cpf = StringField('CPF', validators=[DataRequired()])
     telefone = StringField('Telefone', validators=[DataRequired()])
