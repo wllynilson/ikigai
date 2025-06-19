@@ -16,9 +16,9 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+        user = User.query.filter_by(email=form.email.data).first()
         if user is None or not user.check_password(form.password.data):
-            flash('Nome de usuário ou senha inválida.', 'danger')
+            flash('Email ou senha inválida.', 'danger')
             return redirect(url_for('auth.login'))
 
         login_user(user, remember=form.remember_me.data)
