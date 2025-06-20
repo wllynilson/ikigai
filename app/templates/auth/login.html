@@ -3,39 +3,45 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-6 offset-md-3">
-        <div class="card">
-            <div class="card-header">
-                <h2>Login</h2>
-            </div>
-            <div class="card-body">
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-form-column">
+            <div class="login-form-content">
+                <h2 class="login-title">Acesse sua Conta</h2>
+                <p class="login-subtitle">Bem-vindo de volta! Faça o login para continuar.</p>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} mb-3">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
                 <form method="POST" action="" novalidate>
                     {{ form.hidden_tag() }}
-                    <div class="form-group" type="email">
-                        {% if form.email.errors %}
-                            <div class="alert alert-danger">
-                                {% for error in form.email.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        {{ form.email.label(class="form-control-label") }}
+                    <div class="form-group">
+                        {{ form.email.label(class="form-label") }}
                         {{ form.email(class="form-control", placeholder="seu.email@exemplo.com") }}
                     </div>
                     <div class="form-group">
-                        {{ form.password.label }}
-                        {{ form.password(class="form-control") }}
+                        {{ form.password.label(class="form-label") }}
+                        {{ form.password(class="form-control", placeholder="Sua Senha") }}
                     </div>
                     <div class="form-group form-check">
                         {{ form.remember_me(class="form-check-input") }}
                         {{ form.remember_me.label(class="form-check-label") }}
                     </div>
-                    {{ form.submit(class="btn btn-primary") }}
+                    {{ form.submit(class="btn-login") }}
                 </form>
+                <div class="login-footer-text">
+                    Ainda não tem uma conta? <a href="{{ url_for('auth.register') }}">Registe-se</a>
+                </div>
             </div>
         </div>
+
+        <div class="login-image-column">
+            </div>
     </div>
 </div>
 {% endblock %}

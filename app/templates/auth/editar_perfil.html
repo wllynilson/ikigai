@@ -3,57 +3,59 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <h1 class="mb-4">{{ title }}</h1>
-        <div class="card">
-            <div class="card-body">
-                <form method="POST" action="" novalidate>
-                    {{ form.hidden_tag() }} <div class="form-group">
-                        {{ form.username.label(class="form-control-label") }}
-                        {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
-                        {% for error in form.username.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
-                        {% endfor %}
-                    </div>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-form-column">
+                <div class="login-form-content">
+                    <h2 class="login-title">Editar Perfil</h2>
+                    <p class="login-subtitle">Atualize as suas informações.</p>
 
-                    <div class="form-group">
-                        {{ form.email.label(class="form-control-label") }}
-                        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
-                        {% for error in form.email.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="form-group">
-                        {{ form.nome_completo.label(class="form-control-label") }}
-                        {{ form.nome_completo(class="form-control", placeholder="O seu nome completo") }}
-                    </div>
+                    <form method="POST" action="" novalidate>
+                        {{ form.hidden_tag() }}
 
-                    <div class="form-group">
-                        {{ form.bio.label(class="form-control-label") }}
-                        {{ form.bio(class="form-control", rows=4, placeholder="Fale um pouco sobre si...") }}
-                    </div>
+                        <div class="form-group">
+                            {{ form.username.label(class="form-label") }}
+                            {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                            {% for error in form.username.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
 
-                    <div class="form-group">
-                        {{ form.imagem_perfil.label(class="form-control-label") }}
-                        {{ form.imagem_perfil(class="form-control", placeholder="https://exemplo.com/sua_foto.jpg") }}
-                        {% for error in form.imagem_perfil.errors %}
-                            <span class="invalid-feedback d-block">{{ error }}</span>
-                        {% endfor %}
-                    </div>
+                        <div class="form-group">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                            {% for error in form.email.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
 
-                    <hr>
+                        <hr>
 
-                    <div class="form-group">
-                        {{ form.submit(class="btn btn-primary") }}
-                        <a href="{{ url_for('auth.perfil') }}" class="btn btn-secondary">Cancelar</a>
-                    </div>
-                </form>
+                        <div class="form-group">
+                            {{ form.nome_completo.label(class="form-label") }}
+                            {{ form.nome_completo(class="form-control", placeholder="O seu nome completo") }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.bio.label(class="form-label") }}
+                            {{ form.bio(class="form-control", rows=3, placeholder="Fale um pouco sobre si...") }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.imagem_perfil.label(class="form-label") }}
+                            {{ form.imagem_perfil(class="form-control", placeholder="https://exemplo.com/sua_foto.jpg") }}
+                            {% for error in form.imagem_perfil.errors %}
+                                <span class="invalid-feedback d-block">{{ error }}</span>{% endfor %}
+                        </div>
+
+                        <div class="form-group mt-4">
+                            {{ form.submit(class="btn-login") }}
+                            <a href="{{ url_for('auth.perfil') }}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="login-image-column">
             </div>
         </div>
     </div>
-</div>
 {% endblock %}

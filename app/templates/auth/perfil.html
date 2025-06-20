@@ -1,37 +1,40 @@
 {% extends "base.html" %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}Meu Perfil{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <h1 class="mb-4">Meu Perfil</h1>
-        <div class="card">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-4 text-center">
-                        {% if current_user.imagem_perfil %}
-                            <img src="{{ current_user.imagem_perfil }}" alt="Foto de Perfil" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
-                        {% else %}
-                            <img src="https://via.placeholder.com/150" alt="Foto de Perfil Padrão" class="img-fluid rounded-circle">
-                        {% endif %}
-                    </div>
-                    <div class="col-md-8">
-                        <h3>{{ current_user.nome_completo or current_user.username }}</h3>
-                        <p class="text-muted">{{ current_user.email }}</p>
-                        
-                        {% if current_user.bio %}
-                            <p class="mt-3"><em>"{{ current_user.bio }}"</em></p>
-                        {% else %}
-                            <p class="mt-3 text-muted"><em>Nenhuma biografia adicionada.</em></p>
-                        {% endif %}
+    <div class="profile-header">
+        <img src="{{ current_user.imagem_perfil or 'https://via.placeholder.com/150.png?text=Perfil' }}"
+             alt="Foto de Perfil" class="profile-avatar">
 
-                        <hr>
-                        <a href="{{ url_for('auth.editar_perfil') }}" class="btn btn-primary">Editar Perfil</a>
-                    </div>
-                </div>
-            </div>
+        <h1 class="profile-name">{{ current_user.nome_completo or current_user.username }}</h1>
+        <p class="profile-username">@{{ current_user.username }}</p>
+
+        {% if current_user.bio %}
+            <p class="profile-bio">"{{ current_user.bio }}"</p>
+        {% endif %}
+    </div>
+
+    <div class="card profile-info-card">
+        <div class="card-header">
+            <i class="fas fa-info-circle mr-2"></i>Minhas Informações
+        </div>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+                <strong>Email:</strong>
+                <span>{{ current_user.email }}</span>
+            </li>
+            <li class="list-group-item">
+                <strong>CPF:</strong>
+                <span>{{ current_user.cpf or 'Não informado' }}</span>
+            </li>
+            <li class="list-group-item">
+                <strong>Telefone:</strong>
+                <span>{{ current_user.telefone or 'Não informado' }}</span>
+            </li>
+        </ul>
+        <div class="card-body text-center">
+            <a href="{{ url_for('auth.editar_perfil') }}" class="btn btn-primary">Editar Perfil</a>
         </div>
     </div>
-</div>
 {% endblock %}
