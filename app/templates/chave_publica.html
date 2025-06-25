@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="text-center mb-4">
+        <h1>{{ titulo }}</h1>
+        <h5 class="text-muted">Evento: {{ categoria.evento.nome_evento }}</h5>
+        <a href="{{ url_for('public.detalhe_evento', evento_id=categoria.evento_id) }}" class="btn btn-secondary mt-2">
+            <i class="fas fa-arrow-left"></i> Voltar para o Evento
+        </a>
+    </div>
+
+    <div class="bracket-container">
+        {% for round_num, lutas_no_round in rounds.items()|sort %}
+            <div class="round">
+                <h4 class="round-title">
+                    {% if loop.last %}
+                        Final
+                    {% elif loop.revindex == 2 %}
+                        Semi-Final
+                    {% elif loop.revindex == 3 %}
+                        Quartas de Final
+                    {% else %}
+                        Round {{ round_num }}
+                    {% endif %}
+                </h4>
+                <div class="matches">
+                    {% for luta in lutas_no_round %}
+                        <div class="match">
+                            <div class="match-content">
+                                <div class="participant {% if luta.vencedor_id == luta.competidor1_id %}winner{% endif %}">
+                                    <span>{{ luta.competidor1.nome_completo if luta.competidor1 else 'A definir' }}</span>
+                                </div>
+                                <div class="participant {% if luta.vencedor_id == luta.competidor2_id %}winner{% endif %}">
+                                    <span>{{ luta.competidor2.nome_completo if luta.competidor2 else 'A definir' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

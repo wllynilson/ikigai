@@ -27,6 +27,31 @@
             <p class="event-text">{{ evento.descricao }}</p>
         </div>
 
+        <h2 class="section-title mt-5">
+            <i class="fas fa-sitemap"></i>
+            Chaves de Competição
+        </h2>
+        <div class="list-group">
+            {% for categoria in evento.categorias|sort(attribute='nome') %}
+                {% if categoria.lutas.count() > 0 %}
+                    <a href="{{ url_for('public.visualizar_chave_publica', evento_id=evento.id, categoria_id=categoria.id) }}"
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        {{ categoria.nome }}
+                        <span class="badge badge-primary badge-pill">Ver Chave <i
+                                class="fas fa-arrow-right ml-1"></i></span>
+                    </a>
+                {% else %}
+                    <div class="list-group-item text-muted">
+                        {{ categoria.nome }} (Chave ainda não disponível)
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="list-group-item">
+                    As chaves para este evento ainda não foram geradas.
+                </div>
+            {% endfor %}
+        </div>
+
         <div class="details-card">
             <div class="details-header">
                 <h3 class="details-title">Informações do Evento</h3>

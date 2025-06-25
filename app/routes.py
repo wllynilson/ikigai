@@ -1,14 +1,14 @@
+from collections import defaultdict
 from datetime import datetime
 
 from flask import Blueprint
 from flask import render_template, redirect, url_for, flash
 from flask_login import login_required, current_user
-from sqlalchemy.exc import SQLAlchemyError
 
 from app import db
-from app.admin.routes import categorias_evento
-from app.models import Evento, Equipe, Inscricao, Categoria
-from app.public.forms import InscricaoEventoForm, InscricaoTerceiroForm  # Importa o novo formulário
+from app.models import Equipe, Inscricao
+from app.models import Evento, Categoria, Luta  # Certifique-se que Categoria e Luta estão importados
+from app.public.forms import InscricaoEventoForm  # Importa o novo formulário
 
 public_bp = Blueprint('public', __name__)
 
@@ -86,3 +86,27 @@ def detalhe_evento(evento_id):
     """Exibe a página de detalhes para um único evento."""
     evento = Evento.query.get_or_404(evento_id)
     return render_template('detalhe_evento.html', titulo=evento.nome_evento, evento=evento)
+
+
+@public_bp.route('/evento/<int:evento_id>/categoria/<int:categoria_id>/chave')
+def visualizar_chave_publica(evento_id, categoria_id):
+    """Exibe a página pública da chave de competição para uma categoria."""
+    categoria = Categoria.query.filter_by(id=categoria_id, evento_id=evento_id).first_or_404()
+
+    # Busca todas as lutas da categoria, ordenadas
+    lutas = Luta.query.filter_by(categoria_id=categoria_id).order_by(Luta.round, Luta.ordem_na_chave).all()
+
+    # Se não houver lutas, informa ao utilizador
+    if not lutas:
+        flash('A chave para esta categoria ainda não está disponível.', 'info')
+        return redirect(url_for('public.detalhe_evento', evento_id=evento_id))
+
+    # Organiza as lutas num dicionário por round
+    rounds = defaultdict(list)
+    for luta in lutas:
+        rounds[luta.round].append(luta)
+
+    return render_template('chave_publica.html',
+                           titulo=f"Chave: {categoria.nome}",
+                           categoria=categoria,
+                           rounds=rounds)
