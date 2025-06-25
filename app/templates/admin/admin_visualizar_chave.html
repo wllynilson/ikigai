@@ -12,6 +12,16 @@
         </a>
     </div>
 
+    {% if mostrar_botao_terceiro %}
+        <div class="alert alert-info d-flex justify-content-between align-items-center">
+            <span>As semi-finais foram concluídas. Gere a disputa pelo 3º lugar.</span>
+            <form method="POST" action="{{ url_for('admin.gerar_disputa_terceiro_lugar', categoria_id=categoria.id) }}">
+                <button type="submit" class="btn btn-primary">Gerar Disputa de 3º Lugar</button>
+            </form>
+        </div>
+    {% endif %}
+    <div class="bracket-container">
+
     <div class="bracket-container">
         {% for round_num, lutas_no_round in rounds.items() %}
             <div class="round">

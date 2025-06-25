@@ -386,7 +386,7 @@ def editar_inscricao(inscricao_id):
         form.telefone.data = user.telefone
         form.email.data = user.email
 
-    # 5. Renderiza o template, passando o formulário para ele
+    # 5. Renderiza o modelo, passando o formulário para ele
     return render_template('admin/admin_editar_inscricao.html',
                            titulo='Editar Inscrição',
                            form=form)
@@ -555,24 +555,38 @@ def visualizar_chave(categoria_id):
     """Exibe a chave de competição para uma dada categoria."""
     categoria = Categoria.query.get_or_404(categoria_id)
 
-    # Busca todas as lutas da categoria, ordenadas por round e pela ordem na chave
     lutas = Luta.query.filter_by(categoria_id=categoria_id).order_by(Luta.round, Luta.ordem_na_chave).all()
 
-    # Organiza as lutas num dicionário onde a chave é o número do round
+    if not lutas:
+        flash('A chave para esta categoria ainda não foi gerada.', 'warning')
+        return redirect(url_for('admin.categorias_evento', evento_id=categoria.evento_id))
+
     rounds = defaultdict(list)
     for luta in lutas:
         rounds[luta.round].append(luta)
 
-    # Se não houver lutas, o dicionário estará vazio
-    if not rounds:
-        flash('A chave para esta categoria ainda não foi gerada.', 'warning')
-        return redirect(url_for('admin.gerenciar_categorias_evento', evento_id=categoria.evento_id))
+    # --- LÓGICA DE VERIFICAÇÃO CORRIGIDA ---
+    mostrar_botao_terceiro = False
+    # A final é a ronda com o número mais alto
+    max_round = max(rounds.keys()) if rounds else 0
+
+    # Só pode haver disputa de 3º se houver pelo menos uma final e uma semi-final
+    if max_round > 1:
+        semi_finais = rounds.get(max_round - 1, [])
+        lutas_na_ronda_final = rounds.get(max_round, [])
+
+        # Condições para mostrar o botão:
+        # 1. As duas semi-finais devem ter um vencedor.
+        # 2. Só deve existir UMA luta na ronda final (a própria final, antes da disputa de 3º ser criada).
+        if len(semi_finais) == 2 and all(l.vencedor_id for l in semi_finais) and len(lutas_na_ronda_final) == 1:
+            mostrar_botao_terceiro = True
+    # --- FIM DA LÓGICA CORRIGIDA ---
 
     return render_template('admin/admin_visualizar_chave.html',
                            titulo=f"Chave: {categoria.nome}",
                            categoria=categoria,
-                           rounds=rounds)
-
+                           rounds=rounds,
+                           mostrar_botao_terceiro=mostrar_botao_terceiro)  # Passa a variável corrigida
 
 @bp.route('/luta/<int:luta_id>/set-vencedor', methods=['POST'])
 @admin_required
@@ -633,3 +647,51 @@ def declarar_vencedor(luta_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'status': 'error', 'message': f'Ocorreu um erro: {str(e)}'}), 500
+
+
+@bp.route('/categoria/<int:categoria_id>/gerar-terceiro-lugar', methods=['POST'])
+@admin_required
+def gerar_disputa_terceiro_lugar(categoria_id):
+    categoria = Categoria.query.get_or_404(categoria_id)
+
+    # 1. Encontrar o número do round da final
+    max_round = db.session.query(db.func.max(Luta.round)).filter_by(categoria_id=categoria_id).scalar()
+
+    if not max_round or max_round < 2:
+        flash('Não é possível gerar a disputa de 3º lugar antes das semi-finais.', 'danger')
+        return redirect(url_for('admin.visualizar_chave', categoria_id=categoria_id))
+
+    # 2. Encontrar as lutas da semi-final (round anterior à final)
+    semi_finais = Luta.query.filter_by(categoria_id=categoria_id, round=max_round - 1).all()
+
+    # 3. Validar se as semi-finais estão concluídas
+    if len(semi_finais) != 2 or not all(l.vencedor_id for l in semi_finais):
+        flash('Ambas as lutas da semi-final precisam de ter um vencedor declarado.', 'warning')
+        return redirect(url_for('admin.visualizar_chave', categoria_id=categoria_id))
+
+    # 4. Identificar os perdedores das semi-finais
+    perdedores = []
+    for sf in semi_finais:
+        if sf.vencedor_id == sf.competidor1_id:
+            perdedores.append(sf.competidor2)
+        else:
+            perdedores.append(sf.competidor1)
+
+    # 5. Criar a luta pelo terceiro lugar
+    # Usamos um número de round especial ou o mesmo da final para agrupá-la
+    ordem_final = Luta.query.filter_by(categoria_id=categoria_id, round=max_round).first().ordem_na_chave
+
+    luta_terceiro_lugar = Luta(
+        round=max_round,  # Coloca a disputa no mesmo nível da final
+        ordem_na_chave=ordem_final + 1,  # Garante que apareça depois da final
+        categoria_id=categoria_id,
+        evento_id=categoria.evento_id,
+        competidor1_id=perdedores[0].id,
+        competidor2_id=perdedores[1].id
+    )
+
+    db.session.add(luta_terceiro_lugar)
+    db.session.commit()
+
+    flash('Disputa de 3º lugar gerada com sucesso!', 'success')
+    return redirect(url_for('admin.visualizar_chave', categoria_id=categoria_id))
