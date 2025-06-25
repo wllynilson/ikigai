@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 
 from flask import jsonify
@@ -571,3 +572,64 @@ def visualizar_chave(categoria_id):
                            titulo=f"Chave: {categoria.nome}",
                            categoria=categoria,
                            rounds=rounds)
+
+
+@bp.route('/luta/<int:luta_id>/set-vencedor', methods=['POST'])
+@admin_required
+def declarar_vencedor(luta_id):
+    # 1. Obter os dados enviados pelo JavaScript
+    data = request.get_json()
+    vencedor_id = data.get('vencedor_id')
+
+    if not vencedor_id:
+        return jsonify({'status': 'error', 'message': 'ID do vencedor não fornecido.'}), 400
+
+    luta_atual = Luta.query.get_or_404(luta_id)
+    # Garante que o vencedor é um dos competidores da luta
+    if vencedor_id not in [luta_atual.competidor1_id, luta_atual.competidor2_id]:
+        return jsonify({'status': 'error', 'message': 'Vencedor inválido para esta luta.'}), 400
+
+    # 2. Atualiza a luta atual
+    luta_atual.vencedor_id = vencedor_id
+
+    # 3. Lógica para avançar o vencedor para a próxima ronda
+    # Encontra todas as lutas da mesma categoria e ronda
+    lutas_da_ronda_atual = Luta.query.filter_by(
+        categoria_id=luta_atual.categoria_id,
+        round=luta_atual.round
+    ).order_by(Luta.ordem_na_chave).all()
+
+    # Encontra todas as lutas da próxima ronda
+    lutas_da_proxima_ronda = Luta.query.filter_by(
+        categoria_id=luta_atual.categoria_id,
+        round=luta_atual.round + 1
+    ).order_by(Luta.ordem_na_chave).all()
+
+    # Se houver uma próxima ronda
+    if lutas_da_proxima_ronda:
+        # Descobre o índice da luta atual na sua ronda (0, 1, 2, 3...)
+        indice_da_luta_atual = [l.id for l in lutas_da_ronda_atual].index(luta_atual.id)
+
+        # O vencedor irá para a luta de índice (indice_da_luta_atual / 2) na próxima ronda
+        indice_da_proxima_luta = math.floor(indice_da_luta_atual / 2)
+        proxima_luta = lutas_da_proxima_ronda[indice_da_proxima_luta]
+
+        # Decide se ele será o competidor 1 ou 2 na próxima luta
+        if indice_da_luta_atual % 2 == 0:  # Lutas pares (0, 2, 4...) preenchem o competidor 1
+            proxima_luta.competidor1_id = vencedor_id
+        else:  # Lutas ímpares (1, 3, 5...) preenchem o competidor 2
+            proxima_luta.competidor2_id = vencedor_id
+
+    try:
+        db.session.commit()
+        # Retorna uma resposta de sucesso para o JavaScript
+        return jsonify({
+            'status': 'success',
+            'message': 'Vencedor registado e avançado com sucesso!',
+            'proxima_luta_id': proxima_luta.id if 'proxima_luta' in locals() else None,
+            'vencedor_id': vencedor_id,
+            'vencedor_nome': User.query.get(vencedor_id).nome_completo
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': f'Ocorreu um erro: {str(e)}'}), 500

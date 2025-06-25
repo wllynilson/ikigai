@@ -4,38 +4,181 @@
 {% block page_title %}{{ titulo }}{% endblock %}
 
 {% block content %}
-<div class="mb-3">
-    <h5>Evento: {{ categoria.evento.nome_evento }}</h5>
-    <a href="{{ url_for('admin.categorias_evento', evento_id=categoria.evento_id) }}" class="btn btn-sm btn-secondary">
-        <i class="fas fa-arrow-left"></i> Voltar para Categorias
-    </a>
-</div>
+    <div class="mb-3">
+        <h5>Evento: {{ categoria.evento.nome_evento }}</h5>
+        <a href="{{ url_for('admin.categorias_evento', evento_id=categoria.evento_id) }}"
+           class="btn btn-sm btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar para Categorias
+        </a>
+    </div>
 
-<div class="bracket-container">
-    {% for round_num, lutas_no_round in rounds.items() %}
-        <div class="round">
-            <h4 class="round-title">Round {{ round_num }}</h4>
-            <div class="matches">
-                {% for luta in lutas_no_round %}
-                    <div class="match">
-                        <div class="match-content">
-                            <div class="participant {% if luta.vencedor_id == luta.competidor1_id %}winner{% endif %}">
-                                <span>{{ luta.competidor1.nome_completo if luta.competidor1 else 'A definir' }}</span>
+    <div class="bracket-container">
+        {% for round_num, lutas_no_round in rounds.items() %}
+            <div class="round">
+                <h4 class="round-title">Round {{ round_num }}</h4>
+                <div class="matches">
+                    {% for luta in lutas_no_round %}
+                        <div class="match" id="luta-{{ luta.id }}"
+                             data-luta-id="{{ luta.id }}"
+                             data-c1-id="{{ luta.competidor1.id if luta.competidor1 else '' }}"
+                             data-c1-nome="{{ luta.competidor1.nome_completo if luta.competidor1 else 'A definir' }}"
+                             data-c2-id="{{ luta.competidor2.id if luta.competidor2 else '' }}"
+                             data-c2-nome="{{ luta.competidor2.nome_completo if luta.competidor2 else 'A definir' }}">
+
+                            <div class="match-content">
+                                <div id="participante-luta-{{ luta.id }}-c1"
+                                     class="participant {% if luta.vencedor_id == luta.competidor1_id %}winner{% endif %}">
+                                    <span>{{ luta.competidor1.nome_completo if luta.competidor1 else 'A definir' }}</span>
+                                </div>
+                                <div id="participante-luta-{{ luta.id }}-c2"
+                                     class="participant {% if luta.vencedor_id == luta.competidor2_id %}winner{% endif %}">
+                                    <span>{{ luta.competidor2.nome_completo if luta.competidor2 else 'A definir' }}</span>
+                                </div>
                             </div>
-                            <div class="participant {% if luta.vencedor_id == luta.competidor2_id %}winner{% endif %}">
-                                <span>{{ luta.competidor2.nome_completo if luta.competidor2 else 'A definir' }}</span>
+                            <div class="match-actions">
+                                {% if luta.competidor1 and luta.competidor2 and not luta.vencedor_id %}
+                                    <a href="#" class="btn btn-sm btn-outline-success set-winner-btn"
+                                       title="Definir Vencedor">
+                                        <i class="fas fa-trophy"></i>
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
-                        <div class="match-actions">
-                            <button class="btn btn-sm btn-outline-success disabled" title="Definir Vencedor">
-                                <i class="fas fa-trophy"></i>
-                            </button>
-                        </div>
-                    </div>
-                {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="modal fade" id="winnerModal" tabindex="-1" aria-labelledby="winnerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="winnerModalLabel">Declarar Vencedor</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Selecione o vencedor da luta abaixo:</p>
+                    <div id="modal-competitors"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                </div>
             </div>
         </div>
-    {% endfor %}
-</div>
+    </div>
+{% endblock %}
 
+{% block scripts %}
+    {{ super() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const bracketContainer = document.querySelector('.bracket-container');
+            const winnerModal = $('#winnerModal'); // Usando jQuery para a modal do Bootstrap
+            const modalCompetitorsDiv = document.getElementById('modal-competitors');
+            let currentLutaId = null;
+
+            // 1. Ouve os cliques nos botões de troféu
+            bracketContainer.addEventListener('click', function (event) {
+                const target = event.target.closest('.set-winner-btn');
+                if (!target) return;
+
+                event.preventDefault();
+
+                const matchDiv = target.closest('.match');
+                currentLutaId = matchDiv.dataset.lutaId;
+
+                const c1_id = matchDiv.dataset.c1Id;
+                const c1_nome = matchDiv.dataset.c1Nome;
+                const c2_id = matchDiv.dataset.c2Id;
+                const c2_nome = matchDiv.dataset.c2Nome;
+
+                // 2. Preenche a modal com os dados da luta clicada
+                modalCompetitorsDiv.innerHTML = `
+            <button class="btn btn-outline-primary btn-block text-left mb-2 declare-winner" data-vencedor-id="${c1_id}">${c1_nome}</button>
+            <button class="btn btn-outline-primary btn-block text-left declare-winner" data-vencedor-id="${c2_id}">${c2_nome}</button>
+        `;
+
+                // 3. Abre a modal
+                winnerModal.modal('show');
+            });
+
+            // 4. Ouve os cliques DENTRO da modal para declarar o vencedor
+            modalCompetitorsDiv.addEventListener('click', function (event) {
+                const target = event.target.closest('.declare-winner');
+                if (!target) return;
+
+                // Converter todos os IDs para números para garantir comparação correta
+                const vencedorId = Number(target.dataset.vencedorId);
+                const lutaDiv = document.getElementById(`luta-${currentLutaId}`);
+                const c1Id = Number(lutaDiv.dataset.c1Id);
+                const c2Id = Number(lutaDiv.dataset.c2Id);
+
+                console.log('Verificando vencedor:', vencedorId, 'contra competidores:', c1Id, c2Id);
+                console.log('Tipos de dados:',
+                           'vencedorId:', typeof vencedorId,
+                           'c1Id:', typeof c1Id,
+                           'c2Id:', typeof c2Id);
+
+                if (isNaN(vencedorId) || (vencedorId !== c1Id && vencedorId !== c2Id)) {
+                    alert('Erro: O vencedor selecionado não é um dos competidores desta luta.');
+                    return;
+                }
+
+                console.log('Declarando vencedor:', vencedorId, 'para luta:', currentLutaId);
+                const url = `/admin/luta/${currentLutaId}/set-vencedor`;
+
+                // 5. Envia o pedido AJAX para o backend
+                fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({vencedor_id: Number(vencedorId)})
+                })
+
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Resposta do servidor:', data); // Debug
+                        if (data.status === 'success') {
+                            // 6. Atualiza a interface em tempo real
+                            winnerModal.modal('hide'); // Fecha a modal
+
+                            // Marca o vencedor na luta atual
+                            const lutaAtualDiv = document.getElementById(`luta-${currentLutaId}`);
+                            if (Number(lutaAtualDiv.dataset.c1Id) === vencedorId) {
+                                lutaAtualDiv.querySelector('.participant:first-child').classList.add('winner');
+                            } else {
+                                lutaAtualDiv.querySelector('.participant:last-child').classList.add('winner');
+                            }
+
+                            // Remove o botão de troféu da luta concluída
+                            lutaAtualDiv.querySelector('.set-winner-btn')?.remove();
+
+                            // Avança o vencedor para a próxima luta, se houver
+                            if (data.proxima_luta_id) {
+                                const proximaLutaDiv = document.getElementById(`luta-${data.proxima_luta_id}`);
+                                if (proximaLutaDiv) {
+                                    // Verifica se o vencedor deve ser o competidor 1 ou 2 na próxima luta
+                                    const c1_id_proxima = proximaLutaDiv.dataset.c1Id;
+                                    if (!c1_id_proxima) { // Se o primeiro slot estiver vazio, preenche-o
+                                        proximaLutaDiv.querySelector('.participant:first-child span').textContent = data.vencedor_nome;
+                                        proximaLutaDiv.dataset.c1Id = data.vencedor_id;
+                                        proximaLutaDiv.dataset.c1Nome = data.vencedor_nome;
+                                    } else { // Senão, preenche o segundo
+                                        proximaLutaDiv.querySelector('.participant:last-child span').textContent = data.vencedor_nome;
+                                        proximaLutaDiv.dataset.c2Id = data.vencedor_id;
+                                        proximaLutaDiv.dataset.c2Nome = data.vencedor_nome;
+                                    }
+                                }
+                            }
+
+                        } else {
+                            alert('Erro: ' + data.message);
+                        }
+                    })
+                    .catch(err => console.error('Erro no fetch:', err));
+            });
+        });
+    </script>
 {% endblock %}
