@@ -1,0 +1,92 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header">
+                    Categorias Existentes
+                </div>
+                <div class="card-body">
+                    {% if categorias %}
+                        <ul class="list-group">
+                            {% for categoria in categorias %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ categoria.nome }}</strong><br>
+                                        <small class="text-muted">Inscritos
+                                            Aprovados: {{ categoria.inscricoes.filter_by(status='Aprovada').count() }}</small>
+                                    </div>
+                                    <div class="btn-group btn-group-sm">
+                                        {% if categoria.lutas.count() > 0 %}
+                                            <a href="{{ url_for('admin.visualizar_chave', categoria_id=categoria.id) }}"
+                                               class="btn btn-success">
+                                                <i class="fas fa-eye"></i> Visualizar Chave
+                                            </a>
+                                        {% else %}
+                                            <form method="POST"
+                                                  action="{{ url_for('admin.gerar_chave', categoria_id=categoria.id) }}"
+                                                  onsubmit="return confirm('Isto irá apagar qualquer chave existente e gerar uma nova. Deseja continuar?');">
+                                                <button type="submit" class="btn btn-warning">
+                                                    <i class="fas fa-sitemap"></i> Gerar Chave
+                                                </button>
+                                            </form>
+                                        {% endif %}
+
+                                        <a href="{{ url_for('admin.editar_categoria', categoria_id=categoria.id) }}"
+                                           class="btn btn-primary" title="Editar Categoria">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </a>
+                                        <form method="POST"
+                                              action="{{ url_for('admin.excluir_categoria', categoria_id=categoria.id) }}"
+                                              onsubmit="return confirm('Tem a certeza que deseja excluir esta categoria?');">
+                                            <button type="submit" class="btn btn-danger" title="Excluir Categoria">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Nenhuma categoria cadastrada para este evento ainda.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header">
+                    Adicionar Nova Categoria
+                </div>
+                <div class="card-body">
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+                        <div class="form-group">
+                            {{ form.nome.label(class="font-weight-bold") }}
+                            {{ form.nome(class="form-control" + (" is-invalid" if form.nome.errors else "")) }}
+                            {% if form.nome.description %}
+                                <small class="form-text text-muted">{{ form.nome.description }}</small>
+                            {% endif %}
+                            {% for error in form.nome.errors %}
+                                <span class="invalid-feedback">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="form-group">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('admin.gerenciar_eventos') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i>
+            Voltar para Eventos</a>
+    </div>
+{% endblock %}

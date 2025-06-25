@@ -3,10 +3,12 @@ from datetime import datetime
 from flask import Blueprint
 from flask import render_template, redirect, url_for, flash
 from flask_login import login_required, current_user
+from sqlalchemy.exc import SQLAlchemyError
 
 from app import db
-from app.models import Evento, Equipe, Inscricao
-from app.public.forms import InscricaoEventoForm  # Importa o novo formulário
+from app.admin.routes import categorias_evento
+from app.models import Evento, Equipe, Inscricao, Categoria
+from app.public.forms import InscricaoEventoForm, InscricaoTerceiroForm  # Importa o novo formulário
 
 public_bp = Blueprint('public', __name__)
 
@@ -36,15 +38,31 @@ def inscrever_evento(evento_id):
     # Popula o menu dropdown com as equipas existentes
     form.equipe_id.choices = [(e.id, f"{e.nome_equipe} (Prof. {e.professor_responsavel})") for e in
                               Equipe.query.order_by('nome_equipe').all()]
+    form.categoria_id.choices = [(c.id, c.nome) for c in
+                                 Categoria.query.filter_by(evento_id=evento.id).order_by('nome').all()]
 
     if form.validate_on_submit():
         # --- INÍCIO DA LÓGICA ALTERADA ---
 
+        # Verifica se a equipe selecionada ainda existe
+        equipe_selecionada = Equipe.query.get(form.equipe_id.data)
+        if not equipe_selecionada:
+            flash('A equipe selecionada não foi encontrada. Por favor, selecione outra equipe.', 'danger')
+
         # Primeiro, criamos e salvamos a inscrição
         nova_inscricao = Inscricao(
             user_id=current_user.id,
+            nome_participante=form.nome_participante.data,
+            sobrenome_participante=form.sobrenome_participante.data,
+            idade=form.idade.data,
+            peso=form.peso.data,
+            graduacao=form.graduacao.data,
+            cpf=form.cpf.data,
+            telefone=form.telefone.data,
             evento_id=evento.id,
-            equipe_id=form.equipe_id.data
+            equipe_id=form.equipe_id.data,
+            professor_responsavel=equipe_selecionada.professor_responsavel,
+            categoria_id=form.categoria_id.data
         )
         db.session.add(nova_inscricao)
         db.session.commit()

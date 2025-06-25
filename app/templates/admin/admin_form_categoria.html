@@ -1,0 +1,28 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.nome.label(class="font-weight-bold") }}
+                {{ form.nome(class="form-control" + (" is-invalid" if form.nome.errors else "")) }}
+                {% if form.nome.description %}
+                    <small class="form-text text-muted">{{ form.nome.description }}</small>
+                {% endif %}
+                {% for error in form.nome.errors %}
+                    <span class="invalid-feedback">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('admin.categorias_evento', evento_id=request.view_args['categoria_id']) if request.view_args else url_for('admin.gerenciar_eventos') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

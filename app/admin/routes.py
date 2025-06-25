@@ -1,17 +1,20 @@
-from app.decorators import admin_required
+from datetime import datetime
+
+from flask import jsonify
 from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user, login_user
 from sqlalchemy import or_
-from datetime import datetime
-
-from . import bp  # Importa o 'bp' do __init__.py do admin
-from .. import db  # '..' sobe um nível para o pacote 'app' para pegar o 'db'
-from ..models import Evento, Equipe, Inscricao, User
-from .forms import EditarInscricaoForm, EventoForm # 'from .' pois assumo que forms.py está na mesma pasta admin
-from flask import jsonify
 from sqlalchemy.orm import joinedload
-import secrets
 
+from app.decorators import admin_required
+from . import bp  # Importa o 'bp' do __init__.py do admin
+from .forms import CategoriaForm
+from .forms import EditarInscricaoForm, EventoForm  # 'from .' pois assumo que forms.py está na mesma pasta admin
+from .. import db  # '..' sobe um nível para o pacote 'app' para pegar o 'db'
+from ..models import Categoria
+from ..models import Evento, Equipe, Inscricao, User, Luta
+from app.services import gerar_chave_eliminatoria_simples
+from collections import defaultdict
 
 # --- LOGIN AUTOMÁTICO EM DESENVOLVIMENTO ---
 @bp.before_request
@@ -432,3 +435,139 @@ def resetar_senha_usuario(user_id):
         flash(f"Ocorreu um erro ao resetar a senha: {str(e)}", 'danger')
 
     return redirect(url_for('admin.gerenciar_usuarios'))
+
+
+@bp.route('/evento/<int:evento_id>/categorias', methods=['GET', 'POST'])
+@admin_required
+def categorias_evento(evento_id):
+    evento = Evento.query.get_or_404(evento_id)
+    form = CategoriaForm()
+
+    if form.validate_on_submit():
+        # Lógica para criar uma nova categoria
+        nome_categoria = form.nome.data
+        categoria_existente = Categoria.query.filter_by(evento_id=evento.id, nome=nome_categoria).first()
+
+        if categoria_existente:
+            flash('Uma categoria com este nome já existe para este evento.', 'warning')
+        else:
+            nova_categoria = Categoria(nome=nome_categoria, evento_id=evento.id)
+            db.session.add(nova_categoria)
+            db.session.commit()
+            flash('Nova categoria adicionada com sucesso!', 'success')
+
+        # Redireciona para a mesma página para limpar o formulário e mostrar a nova lista
+        return redirect(url_for('admin.categorias_evento', evento_id=evento.id))
+
+    # Lógica para exibir as categorias existentes
+    categorias_do_evento = Categoria.query.filter_by(evento_id=evento.id).order_by(Categoria.nome).all()
+
+    return render_template('admin/admin_gerenciar_categorias.html',
+                           titulo=f"Categorias de {evento.nome_evento}",
+                           evento=evento,
+                           form=form,
+                           categorias=categorias_do_evento)
+
+
+@bp.route('/categoria/<int:categoria_id>/editar', methods=['GET', 'POST'])
+@admin_required
+def editar_categoria(categoria_id):
+    categoria = Categoria.query.get_or_404(categoria_id)
+    # Reutilizamos o mesmo CategoriaForm que já temos
+    form = CategoriaForm()
+
+    if form.validate_on_submit():
+        # Verifica se o novo nome já existe para este evento
+        novo_nome = form.nome.data
+        categoria_existente = Categoria.query.filter(
+            Categoria.evento_id == categoria.evento_id,
+            Categoria.nome == novo_nome,
+            Categoria.id != categoria_id # Exclui a própria categoria da verificação
+        ).first()
+
+        if categoria_existente:
+            flash('Outra categoria com este nome já existe para este evento.', 'warning')
+        else:
+            categoria.nome = novo_nome
+            db.session.commit()
+            flash('Categoria atualizada com sucesso!', 'success')
+            return redirect(url_for('admin.categorias_evento', evento_id=categoria.evento_id))
+
+    # No GET, pré-preenche o formulário com o nome atual da categoria
+    elif request.method == 'GET':
+        form.nome.data = categoria.nome
+
+    return render_template('admin.admin_form_categoria.html',
+                           titulo=f"Editar Categoria: {categoria.nome}",
+                           form=form)
+
+
+@bp.route('/categoria/<int:categoria_id>/excluir', methods=['POST'])
+@admin_required
+def excluir_categoria(categoria_id):
+    categoria = Categoria.query.get_or_404(categoria_id)
+
+    # Verificação de segurança: a categoria tem inscrições?
+    if categoria.inscricoes.count() > 0:
+        flash('Não é possível excluir uma categoria que já possui participantes inscritos.', 'danger')
+        return redirect(url_for('admin.gerenciar_categorias_evento', evento_id=categoria.evento_id))
+
+    try:
+        evento_id = categoria.evento_id  # Guarda o ID do evento antes de apagar
+        db.session.delete(categoria)
+        db.session.commit()
+        flash('Categoria excluída com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Ocorreu um erro ao excluir a categoria: {str(e)}", 'danger')
+
+    return redirect(url_for('admin.gerenciar_categorias_evento', evento_id=evento_id))
+
+
+@bp.route('/categoria/<int:categoria_id>/gerar-chave', methods=['POST'])
+@admin_required
+def gerar_chave(categoria_id):
+    categoria = Categoria.query.get_or_404(categoria_id)
+
+    # Passo de segurança: apaga qualquer chave antiga para esta categoria
+    # para evitar duplicados se o admin gerar novamente.
+    Luta.query.filter_by(categoria_id=categoria_id).delete()
+    db.session.commit()
+
+    # Chama a nossa função de serviço para fazer a magia
+    sucesso, mensagem = gerar_chave_eliminatoria_simples(
+        categoria_id=categoria.id,
+        evento_id=categoria.evento_id
+    )
+
+    if sucesso:
+        flash(mensagem, 'success')
+    else:
+        flash(mensagem, 'danger')
+
+    return redirect(url_for('admin.categorias_evento', evento_id=categoria.evento_id))
+
+
+@bp.route('/categoria/<int:categoria_id>/chave')
+@admin_required
+def visualizar_chave(categoria_id):
+    """Exibe a chave de competição para uma dada categoria."""
+    categoria = Categoria.query.get_or_404(categoria_id)
+
+    # Busca todas as lutas da categoria, ordenadas por round e pela ordem na chave
+    lutas = Luta.query.filter_by(categoria_id=categoria_id).order_by(Luta.round, Luta.ordem_na_chave).all()
+
+    # Organiza as lutas num dicionário onde a chave é o número do round
+    rounds = defaultdict(list)
+    for luta in lutas:
+        rounds[luta.round].append(luta)
+
+    # Se não houver lutas, o dicionário estará vazio
+    if not rounds:
+        flash('A chave para esta categoria ainda não foi gerada.', 'warning')
+        return redirect(url_for('admin.gerenciar_categorias_evento', evento_id=categoria.evento_id))
+
+    return render_template('admin/admin_visualizar_chave.html',
+                           titulo=f"Chave: {categoria.nome}",
+                           categoria=categoria,
+                           rounds=rounds)

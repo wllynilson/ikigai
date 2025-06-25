@@ -1,77 +1,64 @@
 {% extends 'admin/admin_base.html' %}
 
-{% block title %}Gerenciar Inscrição - Admin{% endblock %}
-
-{% block page_title %}Gerenciar Inscrição{% endblock %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}{{ titulo }} de {{ inscricao.participante.username }} {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="card">
-                <div class="card-header">
-                    <h3>{{ titulo }}</h3>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-subtitle mb-3 text-muted">Evento: {{ inscricao.evento.nome_evento }}</h5>
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        {{ form.nome_participante.label(class="font-weight-bold") }}
+                        {{ form.nome_participante(class="form-control") }}
+                    </div>
+                    <div class="form-group col-md-6">
+                        {{ form.sobrenome_participante.label(class="font-weight-bold") }}
+                        {{ form.sobrenome_participante(class="form-control") }}
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form method="POST" action="" novalidate>
-                        {{ form.hidden_tag() }} <div class="form-group">
-                            {{ form.nome_participante.label(class="form-control-label") }}
-                            {% if form.nome_participante.errors %}
-                                {{ form.nome_participante(class="form-control is-invalid") }}
-                                <div class="invalid-feedback">
-                                    {% for error in form.nome_participante.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                {{ form.nome_participante(class="form-control") }}
-                            {% endif %}
-                        </div>
 
-                        <div class="form-group">
-                            {{ form.sobrenome_participante.label(class="form-control-label") }}
-                            {{ form.sobrenome_participante(class="form-control") }}
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                {{ form.idade.label(class="form-control-label") }}
-                                {{ form.idade(class="form-control") }}
-                            </div>
-                            <div class="form-group col-md-6">
-                                {{ form.cpf.label(class="form-control-label") }}
-                                {{ form.cpf(class="form-control") }}
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            {{ form.telefone.label(class="form-control-label") }}
-                            {{ form.telefone(class="form-control") }}
-                        </div>
-
-                    <div class="form-group">
-                        {{ form.email.label(class="form-control-label") }}
-                        {% if form.email.errors %}
-                            {{ form.email(class="form-control is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in form.email.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {{ form.email(class="form-control") }}
-                        {% endif %}
-
-                        <hr>
-
-                        <div class="form-group">
-                            {{ form.submit(class="btn btn-primary") }}
-                            <a href="{{ url_for('admin.gerenciar_inscricoes') }}" class="btn btn-secondary">Voltar</a>
-                        </div>
-                    </form>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        {{ form.cpf.label(class="font-weight-bold") }}
+                        {{ form.cpf(class="form-control") }}
+                    </div>
+                    <div class="form-group col-md-6">
+                        {{ form.telefone.label(class="font-weight-bold") }}
+                        {{ form.telefone(class="form-control") }}
+                    </div>
                 </div>
-            </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        {{ form.idade.label(class="font-weight-bold") }}
+                        {{ form.idade(class="form-control") }}
+                    </div>
+                    <div class="form-group col-md-4">
+                        {{ form.peso.label(class="font-weight-bold") }}
+                        {{ form.peso(class="form-control", placeholder="Ex: 75.5") }}
+                    </div>
+                    <div class="form-group col-md-4">
+                        {{ form.graduacao.label(class="font-weight-bold") }}
+                        {{ form.graduacao(class="form-control", placeholder="Ex: Faixa Preta") }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    {{ form.professor_responsavel.label(class="font-weight-bold") }}
+                    {{ form.professor_responsavel(class="form-control") }}
+                </div>
+
+                <hr>
+
+                <div class="form-group">
+                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('admin.gerenciar_inscricoes') }}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
         </div>
     </div>
-</div>
 {% endblock %}

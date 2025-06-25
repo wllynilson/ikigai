@@ -149,3 +149,90 @@ body {
         padding: 10px 2vw;
     }
 }
+
+/* =================================
+   ESTILOS PARA A CHAVE DE COMPETIÇÃO
+   ================================= */
+
+.bracket-container {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto; /* Permite scroll horizontal se a chave for muito grande */
+    background-color: #e9ecef;
+    padding: 20px;
+    border-radius: var(--border-radius);
+}
+
+.round {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    flex-grow: 1;
+    min-width: 250px; /* Largura mínima de cada round */
+}
+
+.round-title {
+    text-align: center;
+    color: #6c757d;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.matches {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    flex-grow: 1;
+}
+
+.match {
+    background-color: #fff;
+    border-radius: 8px;
+    margin-bottom: 30px; /* Espaço entre as lutas */
+    box-shadow: var(--shadow);
+    display: flex;
+    position: relative;
+}
+
+.match-content {
+    flex-grow: 1;
+}
+
+.participant {
+    padding: 10px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: all 0.2s ease;
+}
+
+.participant:last-child {
+    border-bottom: none;
+}
+
+.participant.winner span {
+    font-weight: bold;
+    color: #28a745; /* Verde para o vencedor */
+}
+
+.match-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    border-left: 1px solid #eee;
+}
+
+/* Linhas que conectam as lutas (efeito visual) */
+.match::after {
+    content: '';
+    position: absolute;
+    right: -15px; /* Posição da linha */
+    top: 50%;
+    width: 15px;
+    height: 2px;
+    background-color: #999;
+}
+
+/* Esconde a linha para o último round (a final) */
+.round:last-child .match::after {
+    display: none;
+}

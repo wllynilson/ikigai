@@ -1,0 +1,41 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <h5>Evento: {{ categoria.evento.nome_evento }}</h5>
+    <a href="{{ url_for('admin.categorias_evento', evento_id=categoria.evento_id) }}" class="btn btn-sm btn-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar para Categorias
+    </a>
+</div>
+
+<div class="bracket-container">
+    {% for round_num, lutas_no_round in rounds.items() %}
+        <div class="round">
+            <h4 class="round-title">Round {{ round_num }}</h4>
+            <div class="matches">
+                {% for luta in lutas_no_round %}
+                    <div class="match">
+                        <div class="match-content">
+                            <div class="participant {% if luta.vencedor_id == luta.competidor1_id %}winner{% endif %}">
+                                <span>{{ luta.competidor1.nome_completo if luta.competidor1 else 'A definir' }}</span>
+                            </div>
+                            <div class="participant {% if luta.vencedor_id == luta.competidor2_id %}winner{% endif %}">
+                                <span>{{ luta.competidor2.nome_completo if luta.competidor2 else 'A definir' }}</span>
+                            </div>
+                        </div>
+                        <div class="match-actions">
+                            <button class="btn btn-sm btn-outline-success disabled" title="Definir Vencedor">
+                                <i class="fas fa-trophy"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

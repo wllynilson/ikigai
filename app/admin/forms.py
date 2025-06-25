@@ -1,7 +1,7 @@
 # Ficheiro: app/admin/forms.py
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField, FloatField, IntegerField
+from wtforms import StringField, TextAreaField, SubmitField, FloatField, IntegerField, SelectField
 from wtforms.fields import DateTimeLocalField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, URL
 
@@ -29,6 +29,7 @@ class EditarInscricaoForm(FlaskForm):
 
     submit = SubmitField('Salvar Alterações')
 
+
 class EventoForm(FlaskForm):
     """Formulário completo para criar e editar eventos."""
     nome_evento = StringField('Nome do Evento', validators=[DataRequired(), Length(max=200)])
@@ -44,3 +45,22 @@ class EventoForm(FlaskForm):
                                      validators=[Optional()],
                                      description="Insira o código Pix 'copia e cola' para eventos pagos.")
     submit = SubmitField('Salvar Evento')
+
+class AdminEditarInscricaoForm(FlaskForm):
+    """Formulário para o Admin editar os detalhes de um participante numa inscrição."""
+    nome_participante = StringField('Nome do Participante', validators=[DataRequired(), Length(max=100)])
+    sobrenome_participante = StringField('Sobrenome', validators=[DataRequired(), Length(max=100)])
+    idade = IntegerField('Idade', validators=[DataRequired(), NumberRange(min=1)])
+    peso = FloatField('Peso (kg)', validators=[Optional(), NumberRange(min=0)])
+    graduacao = StringField('Graduação', validators=[Optional(), Length(max=50)])
+    professor_responsavel = StringField('Professor Responsável', validators=[Optional(), Length(max=100)])
+    cpf = StringField('CPF', validators=[DataRequired(), Length(min=11, max=14)])
+    telefone = StringField('Telefone', validators=[DataRequired(), Length(min=8, max=20)])
+    submit = SubmitField('Salvar Alterações')
+
+class CategoriaForm(FlaskForm):
+    """Formulário para criar ou editar uma Categoria de evento."""
+    nome = StringField('Nome da Categoria',
+                       validators=[DataRequired(), Length(max=100)],
+                       description="Ex: Faixa Branca / Adulto / Peso Pena")
+    submit = SubmitField('Salvar Categoria')

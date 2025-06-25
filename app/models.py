@@ -56,6 +56,7 @@ class Inscricao(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
     equipe_id = db.Column(db.Integer, db.ForeignKey('equipes.id'), nullable=False)
+    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias.id'), nullable=False)
     # Reintroduz a regra de negócio para evitar duplicados
     # __table_args__ = (db.UniqueConstraint('cpf', 'evento_id', name='uq_cpf_por_evento'),)
 
@@ -84,3 +85,45 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return f'<User {self.username}>'
+
+
+class Categoria(db.Model):
+    __tablename__ = 'categorias'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)  # Ex: "Faixa Branca / Adulto / Peso Pena"
+    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
+
+    evento = db.relationship('Evento', backref='categorias')
+
+    # Relação: Uma categoria tem muitas inscrições
+    inscricoes = db.relationship('Inscricao', backref='categoria', lazy='dynamic')
+    # Relação: Uma categoria tem muitas lutas
+    lutas = db.relationship('Luta', backref='categoria', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<Categoria {self.nome}>'
+
+
+class Luta(db.Model):
+    __tablename__ = 'lutas'
+    id = db.Column(db.Integer, primary_key=True)
+    round = db.Column(db.Integer, nullable=False)  # Ex: 1 para oitavas, 2 para quartas, etc.
+    ordem_na_chave = db.Column(db.Integer, nullable=False)  # Para ordenar as lutas dentro da chave
+
+    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
+    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias.id'), nullable=False)
+
+    # IDs dos competidores - podem ser nulos no início (ex: oponente ainda não definido)
+    competidor1_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    competidor2_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+
+    # ID do vencedor - nulo até a luta ser concluída
+    vencedor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+
+    # Relações com a tabela User, com nomes distintos para evitar conflito
+    competidor1 = db.relationship('User', foreign_keys=[competidor1_id])
+    competidor2 = db.relationship('User', foreign_keys=[competidor2_id])
+    vencedor = db.relationship('User', foreign_keys=[vencedor_id])
+
+    def __repr__(self):
+        return f'<Luta {self.id} - Round {self.round}>'
