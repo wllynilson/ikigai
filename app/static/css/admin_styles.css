@@ -72,7 +72,7 @@ body {
     background-color: var(--primary-red);
     color: #fff;
     font-weight: 600;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar a i {
@@ -86,18 +86,22 @@ body {
     border: none;
     box-shadow: var(--shadow);
 }
+
 .btn {
     border-radius: 25px;
     font-weight: 600;
 }
+
 .btn-primary {
     background-color: var(--primary-red);
     border-color: var(--primary-red);
 }
+
 .btn-primary:hover {
     background-color: var(--dark-red);
     border-color: var(--dark-red);
 }
+
 .form-control:focus {
     border-color: var(--primary-red);
     box-shadow: 0 0 0 0.2rem rgba(214, 58, 38, 0.2);
@@ -141,6 +145,7 @@ body {
         min-height: 44px;
         justify-content: center;
     }
+
     .sidebar a span {
         display: none;
     }
@@ -151,31 +156,37 @@ body {
 }
 
 /* =================================
-   ESTILOS PARA A CHAVE DE COMPETIÇÃO
+   ESTILOS PARA A CHAVE DE COMPETIÇÃO (VERSÃO 2.0 COM LINHAS)
    ================================= */
 
 .bracket-container {
     display: flex;
     flex-direction: row;
-    overflow-x: auto; /* Permite scroll horizontal se a chave for muito grande */
-    background-color: #e9ecef;
-    padding: 20px;
+    align-items: center; /* Centraliza verticalmente as rondas */
+    overflow-x: auto;
+    background-color: #f8f9fa;
+    padding: 40px 20px;
     border-radius: var(--border-radius);
+    min-height: 400px;
 }
 
 .round {
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
+    justify-content: space-around; /* Distribui as lutas uniformemente */
     flex-grow: 1;
-    min-width: 250px; /* Largura mínima de cada round */
+    min-width: 280px; /* Largura mínima de cada coluna/ronda */
+    padding: 0 40px; /* Espaço para as linhas de conexão */
 }
 
 .round-title {
     text-align: center;
     color: #6c757d;
     font-weight: bold;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
 }
 
 .matches {
@@ -188,10 +199,20 @@ body {
 .match {
     background-color: #fff;
     border-radius: 8px;
-    margin-bottom: 30px; /* Espaço entre as lutas */
+    margin-bottom: 60px; /* Aumenta o espaço para as linhas */
     box-shadow: var(--shadow);
     display: flex;
-    position: relative;
+    position: relative; /* Essencial para o posicionamento das linhas */
+    transition: all 0.3s ease;
+}
+
+.match:hover {
+    box-shadow: var(--shadow-hover);
+    transform: scale(1.02);
+}
+
+.match:last-child {
+    margin-bottom: 0;
 }
 
 .match-content {
@@ -199,7 +220,7 @@ body {
 }
 
 .participant {
-    padding: 10px 15px;
+    padding: 12px 15px;
     border-bottom: 1px solid #f0f0f0;
     transition: all 0.2s ease;
 }
@@ -221,18 +242,81 @@ body {
     border-left: 1px solid #eee;
 }
 
-/* Linhas que conectam as lutas (efeito visual) */
+/* AS LINHAS DE CONEXÃO (A MAGIA) */
+
+/* Linha horizontal que sai de CADA luta */
 .match::after {
     content: '';
     position: absolute;
-    right: -15px; /* Posição da linha */
-    top: 50%;
-    width: 15px;
+    background-color: #a0a0a0;
+    width: 20px; /* Metade do padding entre as rondas */
     height: 2px;
-    background-color: #999;
+    top: 50%;
+    left: 100%;
 }
 
-/* Esconde a linha para o último round (a final) */
-.round:last-child .match::after {
+/* Linha vertical que CONECTA um par de lutas */
+.match:nth-of-type(odd)::before {
+    content: '';
+    position: absolute;
+    background-color: #a0a0a0;
+    width: 2px;
+    /* A altura é 100% da luta + a margem entre elas */
+    height: calc(100% + 60px);
+    top: 50%;
+    left: calc(100% + 20px); /* Posiciona no final da linha horizontal */
+}
+
+/* Esconde as linhas para o último round (a final) e para a disputa de 3º lugar */
+.round:last-child .match::after,
+.round:last-child .match::before {
     display: none;
+}
+
+/* Estilos para o Pódio de Vencedores */
+.podium-container {
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.podium-step {
+    padding: 1.5rem 1rem;
+    border-radius: 8px;
+    color: white;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.podium-step .fa-medal {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+}
+
+.podium-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.podium-place {
+    font-size: 1rem;
+    font-weight: 300;
+}
+
+.podium-step.gold {
+    background: linear-gradient(135deg, #FFD700, #F0C300);
+    min-height: 190px; /* O 1º lugar é mais alto */
+}
+
+.podium-step.silver {
+    background: linear-gradient(135deg, #C0C0C0, #A9A9A9);
+    min-height: 160px;
+}
+
+.podium-step.bronze {
+    background: linear-gradient(135deg, #CD7F32, #B87333);
 }

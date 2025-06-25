@@ -3,45 +3,74 @@
 {% block title %}{{ titulo }}{% endblock %}
 
 {% block content %}
-<div class="container my-4">
-    <div class="text-center mb-4">
-        <h1>{{ titulo }}</h1>
-        <h5 class="text-muted">Evento: {{ categoria.evento.nome_evento }}</h5>
-        <a href="{{ url_for('public.detalhe_evento', evento_id=categoria.evento_id) }}" class="btn btn-secondary mt-2">
-            <i class="fas fa-arrow-left"></i> Voltar para o Evento
-        </a>
-    </div>
-
-    <div class="bracket-container">
-        {% for round_num, lutas_no_round in rounds.items()|sort %}
-            <div class="round">
-                <h4 class="round-title">
-                    {% if loop.last %}
-                        Final
-                    {% elif loop.revindex == 2 %}
-                        Semi-Final
-                    {% elif loop.revindex == 3 %}
-                        Quartas de Final
-                    {% else %}
-                        Round {{ round_num }}
-                    {% endif %}
-                </h4>
-                <div class="matches">
-                    {% for luta in lutas_no_round %}
-                        <div class="match">
-                            <div class="match-content">
-                                <div class="participant {% if luta.vencedor_id == luta.competidor1_id %}winner{% endif %}">
-                                    <span>{{ luta.competidor1.nome_completo if luta.competidor1 else 'A definir' }}</span>
-                                </div>
-                                <div class="participant {% if luta.vencedor_id == luta.competidor2_id %}winner{% endif %}">
-                                    <span>{{ luta.competidor2.nome_completo if luta.competidor2 else 'A definir' }}</span>
-                                </div>
+    <div class="container my-4">
+        <div class="text-center mb-4">
+            <h1>{{ titulo }}</h1>
+            <h5 class="text-muted">Evento: {{ categoria.evento.nome_evento }}</h5>
+            <a href="{{ url_for('public.detalhe_evento', evento_id=categoria.evento_id) }}"
+               class="btn btn-secondary mt-2">
+                <i class="fas fa-arrow-left"></i> Voltar para o Evento
+            </a>
+            {% if podio %}
+                <div class="podium-container text-center my-5">
+                    <h2 class="section-title">🏆 Resultados Finais 🏆</h2>
+                    <div class="row align-items-end">
+                        <div class="col-4">
+                            <div class="podium-step silver">
+                                <i class="fas fa-medal"></i>
+                                <h4 class="podium-name">{{ podio.segundo.nome_completo }}</h4>
+                                <div class="podium-place">2º Lugar</div>
                             </div>
                         </div>
-                    {% endfor %}
+                        <div class="col-4">
+                            <div class="podium-step gold">
+                                <i class="fas fa-medal"></i>
+                                <h4 class="podium-name">{{ podio.primeiro.nome_completo }}</h4>
+                                <div class="podium-place">1º Lugar</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="podium-step bronze">
+                                <i class="fas fa-medal"></i>
+                                <h4 class="podium-name">{{ podio.terceiro.nome_completo }}</h4>
+                                <div class="podium-place">3º Lugar</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                <hr>
+            {% endif %}
+
+            <div class="bracket-container">
+                {% for round_num, lutas_no_round in rounds.items()|sort %}
+                    <div class="round">
+                        <h4 class="round-title">
+                            {% if loop.last %}
+                                Final
+                            {% elif loop.revindex == 2 %}
+                                Semi-Final
+                            {% elif loop.revindex == 3 %}
+                                Quartas de Final
+                            {% else %}
+                                Round {{ round_num }}
+                            {% endif %}
+                        </h4>
+                        <div class="matches">
+                            {% for luta in lutas_no_round %}
+                                <div class="match">
+                                    <div class="match-content">
+                                        <div class="participant {% if luta.vencedor_id == luta.competidor1_id %}winner{% endif %}">
+                                            <span>{{ luta.competidor1.nome_completo if luta.competidor1 else 'A definir' }}</span>
+                                        </div>
+                                        <div class="participant {% if luta.vencedor_id == luta.competidor2_id %}winner{% endif %}">
+                                            <span>{{ luta.competidor2.nome_completo if luta.competidor2 else 'A definir' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
-        {% endfor %}
-    </div>
-</div>
+        </div>
 {% endblock %}

@@ -93,20 +93,45 @@ def visualizar_chave_publica(evento_id, categoria_id):
     """Exibe a página pública da chave de competição para uma categoria."""
     categoria = Categoria.query.filter_by(id=categoria_id, evento_id=evento_id).first_or_404()
 
-    # Busca todas as lutas da categoria, ordenadas
     lutas = Luta.query.filter_by(categoria_id=categoria_id).order_by(Luta.round, Luta.ordem_na_chave).all()
 
-    # Se não houver lutas, informa ao utilizador
     if not lutas:
         flash('A chave para esta categoria ainda não está disponível.', 'info')
         return redirect(url_for('public.detalhe_evento', evento_id=evento_id))
 
-    # Organiza as lutas num dicionário por round
     rounds = defaultdict(list)
     for luta in lutas:
         rounds[luta.round].append(luta)
 
+    # --- NOVA LÓGICA PARA DETERMINAR O PÓDIO ---
+    podio = None
+    if rounds:
+        max_round = max(rounds.keys())
+        lutas_da_ultima_ronda = rounds.get(max_round, [])
+
+        # Procura pela final (ordem 1) e pela disputa de 3º lugar (ordem > 1)
+        final = next((l for l in lutas_da_ultima_ronda if l.ordem_na_chave == 1), None)
+        luta_terceiro = next((l for l in lutas_da_ultima_ronda if l.ordem_na_chave > 1), None)
+
+        # Verifica se ambas as lutas decisivas (final e 3º lugar) têm um vencedor
+        if final and final.vencedor_id and luta_terceiro and luta_terceiro.vencedor_id:
+            # Determina o 1º e 2º lugar a partir da final
+            vencedor_final = User.query.get(final.vencedor_id)
+            # O segundo lugar é o competidor que não é o vencedor
+            segundo_lugar = final.competidor1 if final.vencedor_id == final.competidor2_id else final.competidor2
+
+            # O 3º lugar é o vencedor da outra luta
+            terceiro_lugar = User.query.get(luta_terceiro.vencedor_id)
+
+            podio = {
+                'primeiro': vencedor_final,
+                'segundo': segundo_lugar,
+                'terceiro': terceiro_lugar
+            }
+    # --- FIM DA LÓGICA DO PÓDIO ---
+
     return render_template('chave_publica.html',
                            titulo=f"Chave: {categoria.nome}",
                            categoria=categoria,
-                           rounds=rounds)
+                           rounds=rounds,
+                           podio=podio)  # Passa o dicionário do pódio para o template
