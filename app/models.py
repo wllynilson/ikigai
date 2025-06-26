@@ -56,7 +56,7 @@ class Inscricao(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
     equipe_id = db.Column(db.Integer, db.ForeignKey('equipes.id'), nullable=False)
-    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias.id'), nullable=False)
+    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias.id'), nullable=True)
     # Reintroduz a regra de negócio para evitar duplicados
     # __table_args__ = (db.UniqueConstraint('cpf', 'evento_id', name='uq_cpf_por_evento'),)
 
