@@ -9,21 +9,39 @@ from app.models import User
 
 auth_bp = Blueprint('auth', __name__, template_folder='templates')
 
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('public.index')) # Já está logado, vai para o dashboard
+        # Se um utilizador já logado aceder à página de login, redireciona-o
+        if current_user.role == 'admin':
+            return redirect(url_for('admin.dashboard'))
+        else:
+            return redirect(url_for('public.index'))
 
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
+
         if user is None or not user.check_password(form.password.data):
             flash('Email ou senha inválida.', 'danger')
             return redirect(url_for('auth.login'))
 
         login_user(user, remember=form.remember_me.data)
         flash('Login efetuado com sucesso!', 'success')
-        return redirect(url_for('public.index'))
+
+        # --- LÓGICA DE REDIRECIONAMENTO CORRIGIDA ---
+        next_page = request.args.get('next')
+        # Se não houver uma página 'next' ou se for um link inseguro, decidimos para onde ir
+        if not next_page or not next_page.startswith('/'):
+            # Se o utilizador for admin, o destino padrão é o dashboard de admin
+            if user.role == 'admin':
+                next_page = url_for('admin.dashboard')
+            # Se for um utilizador normal, o destino padrão é a página de perfil
+            else:
+                next_page = url_for('auth.perfil')
+
+        return redirect(next_page)
 
     return render_template('auth/login.html', title='Login', form=form)
 
