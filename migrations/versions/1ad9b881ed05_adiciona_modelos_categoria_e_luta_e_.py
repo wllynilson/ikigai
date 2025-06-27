@@ -42,7 +42,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('inscricoes', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('categoria_id', sa.Integer(), nullable=False))
+        batch_op.add_column(sa.Column('categoria_id', sa.Integer(), nullable=True))
         batch_op.create_foreign_key('fk_inscricoes_categoria_id_categorias', 'categorias', ['categoria_id'], ['id'])
 
     # ### end Alembic commands ###
