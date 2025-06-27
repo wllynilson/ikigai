@@ -695,3 +695,58 @@ def gerar_disputa_terceiro_lugar(categoria_id):
 
     flash('Disputa de 3º lugar gerada com sucesso!', 'success')
     return redirect(url_for('admin.visualizar_chave', categoria_id=categoria_id))
+
+
+@bp.route('/ferramentas/atribuir-categorias', methods=['GET', 'POST'])
+@admin_required
+def atribuir_categorias_antigas():
+    """
+    Ferramenta de uso único para encontrar inscrições antigas sem categoria,
+    criar uma categoria 'Geral' para o seu respectivo evento (se não existir)
+    e atribuí-la a essas inscrições.
+    """
+    if request.method == 'POST':
+        try:
+            # 1. Encontra todas as inscrições que não têm categoria (são as antigas)
+            inscricoes_sem_categoria = Inscricao.query.filter(Inscricao.categoria_id.is_(None)).all()
+
+            if not inscricoes_sem_categoria:
+                flash('Não foram encontradas inscrições antigas para atualizar.', 'info')
+                return redirect(url_for('admin.dashboard'))
+
+            # Usamos um dicionário para não ter de procurar a categoria 'Geral' repetidamente
+            categorias_gerais_cache = {}
+            count = 0
+
+            for inscricao in inscricoes_sem_categoria:
+                evento_id = inscricao.evento_id
+
+                # Verifica se já encontrámos ou criámos a categoria 'Geral' para este evento
+                if evento_id not in categorias_gerais_cache:
+                    categoria_geral = Categoria.query.filter_by(evento_id=evento_id, nome='Geral').first()
+
+                    if not categoria_geral:
+                        # Se não existir, cria-a agora
+                        categoria_geral = Categoria(nome='Geral', evento_id=evento_id)
+                        db.session.add(categoria_geral)
+                        # O 'flush' atribui um ID à nova categoria antes do commit final
+                        db.session.flush()
+
+                        # Guarda o ID da categoria no nosso cache
+                    categorias_gerais_cache[evento_id] = categoria_geral.id
+
+                # Atribui o ID da categoria padrão à inscrição
+                inscricao.categoria_id = categorias_gerais_cache[evento_id]
+                count += 1
+
+            db.session.commit()
+            flash(f'{count} inscrições antigas foram atribuídas a uma categoria "Geral" com sucesso!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ocorreu um erro ao atualizar as inscrições: {e}', 'danger')
+
+        return redirect(url_for('admin.dashboard'))
+
+    # Para um pedido GET, apenas mostra a página com o botão de confirmação
+    return render_template('admin/admin_ferramenta_atribuicao.html',
+                           titulo="Atribuir Categorias a Inscrições Antigas")

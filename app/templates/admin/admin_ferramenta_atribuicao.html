@@ -1,0 +1,24 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <h4><i class="fas fa-exclamation-triangle"></i> Atenção! Ação Irreversível</h4>
+            <p>Esta é uma ferramenta de uso único para atualizar as inscrições realizadas <strong>antes</strong> da implementação do sistema de categorias.</p>
+            <p>Este processo irá procurar por todas as inscrições que não têm uma categoria e irá atribuí-las a uma categoria padrão chamada "Geral" dentro dos seus respectivos eventos.</p>
+            <p class="mb-0">Clique no botão abaixo para iniciar o processo. Recomenda-se fazer um backup do banco de dados antes, se possível.</p>
+        </div>
+
+        <form method="POST" class="mt-4" onsubmit="return confirm('Esta ação irá modificar as inscrições antigas permanentemente. Tem a certeza que deseja continuar?');">
+            <button type="submit" class="btn btn-warning btn-lg">
+                <i class="fas fa-cogs"></i> Atribuir Categorias Padrão Agora
+            </button>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-lg">Voltar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
