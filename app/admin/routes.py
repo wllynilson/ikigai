@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload
 
 from app.decorators import admin_required
 from . import bp  # Importa o 'bp' do __init__.py do admin
-from .forms import CategoriaForm
+from .forms import CategoriaForm, AdminEditarInscricaoForm
 from .forms import EditarInscricaoForm, EventoForm  # 'from .' pois assumo que forms.py está na mesma pasta admin
 from .. import db  # '..' sobe um nível para o pacote 'app' para pegar o 'db'
 from ..models import Categoria
@@ -344,53 +344,36 @@ def rejeitar_inscricao(inscricao_id):
 @bp.route('/inscricao/editar/<int:inscricao_id>', methods=['GET', 'POST'])
 @admin_required
 def editar_inscricao(inscricao_id):
-    """
-    Rota para editar uma inscrição existente.
-    GET: Exibe o formulário preenchido com os dados atuais.
-    POST: Valida e salva as alterações no banco de dados.
-    """
-    # 1. Busca a inscrição que queremos editar. Erro 404 se não existir.
     inscricao = Inscricao.query.get_or_404(inscricao_id)
-    user = User.query.get_or_404(inscricao.user_id)  # Pega o usuário associado à inscrição
+    form = AdminEditarInscricaoForm(obj=inscricao)
 
-    # 2. Instancia o nosso formulário de edição.
-    form = EditarInscricaoForm()
+    # --- LÓGICA ADICIONADA ---
+    # Popula o dropdown com as categorias do evento específico da inscrição
+    # A lista de tuplos (id, nome) é o formato que o SelectField espera
+    form.categoria_id.choices = [
+        (c.id, c.nome) for c in Categoria.query.filter_by(
+            evento_id=inscricao.evento_id
+        ).order_by(Categoria.nome).all()
+    ]
+    # --- FIM DA LÓGICA ---
 
-    # 3. Lógica para quando o formulário é submetido (POST)
     if form.validate_on_submit():
-        # Atualiza os dados do objeto 'inscricao' com os dados do formulário
-        inscricao.nome_participante = form.nome_participante.data
-        inscricao.sobrenome_participante = form.sobrenome_participante.data
-        inscricao.idade = form.idade.data
-        inscricao.cpf = form.cpf.data
-        inscricao.telefone = form.telefone.data
-        inscricao.email = form.email.data
-
         try:
-            # Salva as alterações no banco de dados
+            # O populate_obj irá atualizar todos os campos, incluindo a nova categoria_id
+            form.populate_obj(inscricao)
             db.session.commit()
             flash('Inscrição atualizada com sucesso!', 'success')
-            # Redireciona de volta para a página de gerenciamento
-            return redirect(url_for('admin.gerenciar_inscricoes'))
+            # Redireciona de volta para a lista de inscrições daquele evento
+            return redirect(url_for('admin.listar_inscricoes_evento', evento_id=inscricao.evento_id))
         except Exception as e:
             db.session.rollback()
-            flash(f'Ocorreu um erro ao atualizar a inscrição: {e}', 'danger')
+            flash(f'Erro ao atualizar inscrição: {e}', 'danger')
 
-    # 4. Lógica para quando a página é carregada pela primeira vez (GET)
-    elif request.method == 'GET':
-        # Preenche o formulário com os dados que já existem no banco de dados
-        form.nome_participante.data = user.username
-        form.sobrenome_participante.data = user.nome_completo
-        # form.idade.data = inscricao.idade
-        form.cpf.data = user.cpf
-        form.telefone.data = user.telefone
-        form.email.data = user.email
-
-    # 5. Renderiza o modelo, passando o formulário para ele
+    # No GET, o WTForms já pré-seleciona a categoria correta graças ao obj=inscricao
     return render_template('admin/admin_editar_inscricao.html',
-                           titulo='Editar Inscrição',
-                           form=form)
-
+                           titulo="Editar Inscrição",
+                           form=form,
+                           inscricao=inscricao)
 
 @bp.route('/usuarios')
 @admin_required
