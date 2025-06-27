@@ -56,6 +56,7 @@ class AdminEditarInscricaoForm(FlaskForm):
     professor_responsavel = StringField('Professor Responsável', validators=[Optional(), Length(max=100)])
     cpf = StringField('CPF', validators=[DataRequired(), Length(min=11, max=14)])
     telefone = StringField('Telefone', validators=[DataRequired(), Length(min=8, max=20)])
+    categoria_id = SelectField('Categoria do Atleta', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Salvar Alterações')
 
 class CategoriaForm(FlaskForm):
