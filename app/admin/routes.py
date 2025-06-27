@@ -243,41 +243,38 @@ def excluir_evento(evento_id):
 @bp.route('/gerenciar_inscricoes')
 @admin_required
 def gerenciar_inscricoes():
-    # 1. Lê o número da página a partir da URL (ex: /gerenciar_inscricoes?page=2)
-    # O '1' é o valor padrão, e 'type=int' garante que é um número.
     page = request.args.get('page', 1, type=int)
-
-    # Pega os parâmetros de pesquisa que já tínhamos
     termo_pesquisa = request.args.get('q')
     evento_filtro_id = request.args.get('evento_id')
 
-    # A lógica de construção da query permanece a mesma
-    # query = Inscricao.query
     query = Inscricao.query.options(
         joinedload(Inscricao.participante),
         joinedload(Inscricao.evento),
         joinedload(Inscricao.equipe)
     )
+
     if termo_pesquisa:
-        query = query.filter(or_(
-            Inscricao.user_id.ilike(f'%{termo_pesquisa}%'),  # Busca pelo ID do usuário
-            User.username.ilike(f'%{termo_pesquisa}%'),  # Busca pelo nome de usuário
-            User.nome_completo.ilike(f'%{termo_pesquisa}%'),  # Busca pelo nome completo do usuário
-            User.cpf.ilike(f'%{termo_pesquisa}%'),  # Busca pelo CPF do usuário
-            User.email.ilike(f'%{termo_pesquisa}%')  # Busca pelo email do usuário
-        ))
+        # Corrigido para não usar ILIKE em campo inteiro
+        query = query.join(User, Inscricao.user_id == User.id).filter(
+            or_(
+                # Remova ou converta user_id para texto
+                # func.cast(Inscricao.user_id, String).ilike(f'%{termo_pesquisa}%'),
+                User.username.ilike(f'%{termo_pesquisa}%'),
+                User.nome_completo.ilike(f'%{termo_pesquisa}%'),
+                User.cpf.ilike(f'%{termo_pesquisa}%'),
+                User.email.ilike(f'%{termo_pesquisa}%')
+            )
+        )
+
     if evento_filtro_id:
         query = query.filter(Inscricao.evento_id == evento_filtro_id)
 
     inscricoes_paginadas = query.order_by(Inscricao.data_inscricao.desc()).paginate(
         page=page, per_page=10, error_out=False
     )
-    print(inscricoes_paginadas.items)
 
-    # A busca de eventos para o filtro continua igual
     eventos_para_filtro = Evento.query.order_by(Evento.nome_evento).all()
 
-    # 3. Passamos o objeto de paginação para o template
     return render_template('admin/admin_gerenciar_inscricoes.html',
                            inscricoes_paginadas=inscricoes_paginadas,
                            eventos_para_filtro=eventos_para_filtro,
