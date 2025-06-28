@@ -341,32 +341,32 @@ def rejeitar_inscricao(inscricao_id):
 @bp.route('/inscricao/editar/<int:inscricao_id>', methods=['GET', 'POST'])
 @admin_required
 def editar_inscricao(inscricao_id):
+    # Busca a inscrição específica que queremos editar
     inscricao = Inscricao.query.get_or_404(inscricao_id)
-    form = AdminEditarInscricaoForm(obj=inscricao)
 
-    # --- LÓGICA ADICIONADA ---
+    # Se for um pedido GET, pré-preenche o formulário com os dados do objeto 'inscricao'
+    # Se for um pedido POST, o WTForms irá carregar os dados do request automaticamente
+    form = AdminEditarInscricaoForm(obj=inscricao if request.method == 'GET' else None)
+
     # Popula o dropdown com as categorias do evento específico da inscrição
-    # A lista de tuplos (id, nome) é o formato que o SelectField espera
     form.categoria_id.choices = [
         (c.id, c.nome) for c in Categoria.query.filter_by(
             evento_id=inscricao.evento_id
         ).order_by(Categoria.nome).all()
     ]
-    # --- FIM DA LÓGICA ---
 
     if form.validate_on_submit():
         try:
-            # O populate_obj irá atualizar todos os campos, incluindo a nova categoria_id
+            # Pega nos dados do formulário e atualiza o objeto 'inscricao'
             form.populate_obj(inscricao)
             db.session.commit()
             flash('Inscrição atualizada com sucesso!', 'success')
-            # Redireciona de volta para a lista de inscrições daquele evento
+            # Redireciona de volta para a lista de inscrições do evento
             return redirect(url_for('admin.listar_inscricoes_evento', evento_id=inscricao.evento_id))
         except Exception as e:
             db.session.rollback()
             flash(f'Erro ao atualizar inscrição: {e}', 'danger')
 
-    # No GET, o WTForms já pré-seleciona a categoria correta graças ao obj=inscricao
     return render_template('admin/admin_editar_inscricao.html',
                            titulo="Editar Inscrição",
                            form=form,
@@ -478,7 +478,7 @@ def editar_categoria(categoria_id):
     elif request.method == 'GET':
         form.nome.data = categoria.nome
 
-    return render_template('admin.admin_form_categoria.html',
+    return render_template('admin/admin_form_categoria.html',
                            titulo=f"Editar Categoria: {categoria.nome}",
                            form=form)
 
