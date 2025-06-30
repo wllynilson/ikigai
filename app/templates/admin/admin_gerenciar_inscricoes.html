@@ -43,7 +43,7 @@
                     <th>Participante</th>
                     <th>CPF</th>
                     <th>Evento</th>
-                    <th>Equipe</th>
+                    <th>Categoria</th>
                     <th>Data da Inscrição</th>
                     <th>Status</th>
                     <th class="text-center">Ações</th>
@@ -53,53 +53,51 @@
                 {% if inscricoes_paginadas.items %}
                     {% for inscricao in inscricoes_paginadas.items %}
                         <tr>
-                            <td>{{ inscricao.participante.nome_completo or inscricao.participante.username }}</td>
-                            <td>{{ inscricao.participante.cpf or 'N/D' }}</td>
-                            <td>{{ inscricao.evento.nome_evento }}</td>
-                            <td>{{ inscricao.equipe.nome_equipe }}</td>
-                            <td>{{ inscricao.data_inscricao.strftime('%d/%m/%Y às %H:%M') }}</td>
+                            <td>
+                                <strong>{{ inscricao.participante.nome_completo }}</strong><br>
+                                <small class="text-muted">Equipe: {{ inscricao.participante.equipe.nome_equipe }}</small>
+                            </td>
+                            <td>{{ inscricao.participante.cpf }}</td>
+                            <td>{{ inscricao.categoria.evento.nome_evento }}</td>
+                            <td>{{ inscricao.categoria.nome }}</td>
+                            <td>{{ inscricao.data_inscricao.strftime('%d/%m/%Y') }}</td>
 
-                            <td class="status-cell">
-                                {% if inscricao.status == 'Aprovada' %}
-                                    <span class="badge badge-success">{{ inscricao.status }}</span>
-                                {% elif inscricao.status == 'Rejeitada' %}
-                                    <span class="badge badge-danger">{{ inscricao.status }}</span>
+                            <td class="text-center status-cell">
+                                {% if inscricao.status == 'Pendente' %}
+                                    <span class="badge badge-warning">Pendente</span>
+                                {% elif inscricao.status == 'Aprovado' %}
+                                    <span class="badge badge-success">Aprovado</span>
+                                {% elif inscricao.status == 'Rejeitado' %}
+                                    <span class="badge badge-secondary">Rejeitado</span>
+                                {% elif inscricao.status == 'Cancelado' %}
+                                    <span class="badge badge-danger">Cancelado</span>
                                 {% else %}
-                                    <span class="badge badge-warning">{{ inscricao.status }}</span>
+                                    <span class="badge badge-info">{{ inscricao.status }}</span>
                                 {% endif %}
                             </td>
 
                             <td class="text-center">
                                 <div class="btn-group" role="group">
-                                    <a href="{{ url_for('admin.editar_inscricao', inscricao_id=inscricao.id) }}"
-                                       class="btn btn-primary btn-sm" title="Editar Inscrição">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </a>
+                                    <a href="{{ url_for('admin.editar_inscricao', inscricao_id=inscricao.id) }}" class="btn btn-primary btn-sm" title="Editar Inscrição"><i class="fas fa-pencil-alt"></i></a>
 
                                     {% if inscricao.status == 'Pendente' %}
                                         <form class="d-inline" data-action="approve-form"
                                               action="{{ url_for('admin.aprovar_inscricao', inscricao_id=inscricao.id) }}"
                                               method="post">
-                                            <button type="submit" class="btn btn-success btn-sm" title="Aprovar">
-                                                <i class="fas fa-check"></i>
-                                            </button>
+                                            <button type="submit" class="btn btn-success btn-sm" title="Aprovar"><i
+                                                    class="fas fa-check"></i></button>
                                         </form>
                                         <form class="d-inline" data-action="reject-form"
                                               action="{{ url_for('admin.rejeitar_inscricao', inscricao_id=inscricao.id) }}"
                                               method="post">
-                                            <button type="submit" class="btn btn-secondary btn-sm" title="Rejeitar">
-                                                <i class="fas fa-times"></i>
-                                            </button>
+                                            <button type="submit" class="btn btn-secondary btn-sm" title="Rejeitar"><i
+                                                    class="fas fa-times"></i></button>
                                         </form>
                                     {% endif %}
 
-                                    <form class="d-inline" data-action="cancel-form"
-                                          action="{{ url_for('admin.cancelar_inscricao', inscricao_id=inscricao.id) }}"
-                                          method="post"
-                                    >
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Excluir Inscrição">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                    <form class="d-inline" data-action="cancel-form" action="#" method="post">
+                                        <button type="submit" class="btn btn-danger btn-sm disabled"
+                                                title="Excluir Inscrição"><i class="fas fa-trash"></i></button>
                                     </form>
                                 </div>
                             </td>
@@ -148,62 +146,40 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const tableBody = document.querySelector('table tbody');
-
-            // Garante que o tableBody existe antes de adicionar o 'listener'
             if (tableBody) {
                 tableBody.addEventListener('submit', function (event) {
-                    // Apenas atua em formulários com o atributo data-action
                     const form = event.target;
                     if (form && form.dataset.action) {
-
-                        // PASSO 1: Impede o recarregamento da página
                         event.preventDefault();
 
-                        const actionType = form.dataset.action;
-                        const url = form.action;
-                        const inscricaoRow = form.closest('tr');
-                        const actionCell = form.parentElement;
-
-                        // PASSO 2: Lógica de confirmação para exclusão
-                        if (actionType === 'cancel-form') {
-                            if (!confirm('Tem a certeza que deseja EXCLUIR PERMANENTEMENTE esta inscrição?')) {
-                                return; // Utilizador cancelou, não faz mais nada
-                            }
+                        if (form.dataset.action === 'cancel-form') {
+                            if (!confirm('Tem a certeza que deseja excluir esta inscrição?')) return;
                         }
 
-                        // Mostra um feedback visual de processamento
+                        const url = form.action;
+                        const actionCell = form.parentElement;
                         actionCell.innerHTML = '<span class="text-muted">A processar...</span>';
 
-                        // PASSO 3: Envia o pedido AJAX
                         fetch(url, {method: 'POST'})
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error('Erro de rede.');
-                                }
-                                return response.json();
-                            })
+                            .then(response => response.json())
                             .then(data => {
                                 if (data.status === 'success') {
-                                    // PASSO 4: Atualiza a interface com base na resposta
-                                    if (data.action === 'delete') {
-                                        // Anima e remove a linha da tabela
-                                        inscricaoRow.style.transition = 'opacity 0.5s';
-                                        inscricaoRow.style.opacity = '0';
-                                        setTimeout(() => inscricaoRow.remove(), 500);
+                                    const inscricaoRow = form.closest('tr');
+                                    if (data.action === 'delete') { // Para uma futura ação de apagar
+                                        inscricaoRow.remove();
                                     } else {
-                                        // Para 'approve' e 'reject', atualiza o status
+                                        // Para 'approve' e 'reject'
                                         const statusCell = inscricaoRow.querySelector('.status-cell');
                                         statusCell.innerHTML = data.novo_status_html;
                                         actionCell.innerHTML = '<span class="text-success font-weight-bold">Concluído</span>';
                                     }
                                 } else {
-                                    // Em caso de erro lógico do servidor
                                     alert(data.message);
                                     actionCell.innerHTML = form.innerHTML;
                                 }
                             })
                             .catch(error => {
-                                console.error('Erro no fetch:', error);
+                                console.error('Erro:', error);
                                 alert('Ocorreu um erro de comunicação.');
                                 actionCell.innerHTML = form.innerHTML;
                             });

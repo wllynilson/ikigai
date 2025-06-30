@@ -3,6 +3,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, SubmitField, FloatField, IntegerField, SelectField
 from wtforms.fields import DateTimeLocalField
+from wtforms.fields.datetime import DateField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, URL
 
 
@@ -65,3 +66,14 @@ class CategoriaForm(FlaskForm):
                        validators=[DataRequired(), Length(max=100)],
                        description="Ex: Faixa Branca / Adulto / Peso Pena")
     submit = SubmitField('Salvar Categoria')
+
+class EditarParticipanteForm(FlaskForm):
+    """Formulário para o Admin editar os detalhes de um Participante."""
+    nome_completo = StringField('Nome Completo', validators=[DataRequired(), Length(max=150)])
+    cpf = StringField('CPF', validators=[DataRequired()])
+    telefone = StringField('Telefone', validators=[DataRequired()])
+    data_nascimento = DateField('Data de Nascimento', format='%Y-%m-%d', validators=[Optional()])
+    peso = FloatField('Peso (kg)', validators=[Optional(), NumberRange(min=0)])
+    graduacao = StringField('Graduação', validators=[DataRequired()])
+    equipe_id = SelectField('Equipe', coerce=int, validators=[DataRequired()])
+    submit = SubmitField('Salvar Alterações')

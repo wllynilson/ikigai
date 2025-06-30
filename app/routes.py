@@ -20,66 +20,60 @@ def index():
 
 
 @public_bp.route('/inscrever/<int:evento_id>', methods=['GET', 'POST'])
-@login_required  # Garante que apenas utilizadores logados podem aceder
+@login_required
 def inscrever_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
+    # Pega o perfil de participante associado ao utilizador logado
+    participante = current_user.participante
 
-    # Verifica se o utilizador já está inscrito neste evento
-    inscricao_existente = Inscricao.query.filter_by(user_id=current_user.id, evento_id=evento.id).first()
-    if inscricao_existente:
-        flash('Você já está inscrito neste evento.', 'info')
-        return redirect(url_for('public.index'))
+    # Verificação 1: Garante que o utilizador tem um perfil de participante completo
+    if not participante or not participante.cpf:
+        flash('Para se inscrever, por favor, complete primeiro o seu perfil de atleta.', 'warning')
+        return redirect(url_for('auth.editar_perfil'))
 
-    if evento.numero_vagas <= 0:  # Uma verificação extra
+    # Verificação 2: Redireciona se o evento estiver esgotado
+    if evento.numero_vagas <= 0:
         flash('As inscrições para este evento estão encerradas (vagas esgotadas).', 'warning')
-        return redirect(url_for('public.index'))
+        return redirect(url_for('public.detalhe_evento', evento_id=evento.id))
 
     form = InscricaoEventoForm()
-    # Popula o menu dropdown com as equipas existentes
-    form.equipe_id.choices = [(e.id, f"{e.nome_equipe} (Prof. {e.professor_responsavel})") for e in
-                              Equipe.query.order_by('nome_equipe').all()]
-    form.categoria_id.choices = [(c.id, c.nome) for c in
-                                 Categoria.query.filter_by(evento_id=evento.id).order_by('nome').all()]
+    # Popula o dropdown apenas com as categorias do evento atual
+    form.categoria_id.choices = [(c.id, c.nome) for c in evento.categorias]
 
     if form.validate_on_submit():
-        # --- INÍCIO DA LÓGICA ALTERADA ---
+        categoria_id_selecionada = form.categoria_id.data
 
-        # Verifica se a equipe selecionada ainda existe
-        equipe_selecionada = Equipe.query.get(form.equipe_id.data)
-        if not equipe_selecionada:
-            flash('A equipe selecionada não foi encontrada. Por favor, selecione outra equipe.', 'danger')
+        # Verificação 3: Garante que o participante já não está inscrito nesta categoria
+        inscricao_existente = Inscricao.query.filter_by(
+            participante_id=participante.id,
+            categoria_id=categoria_id_selecionada
+        ).first()
+        if inscricao_existente:
+            flash('Você já está inscrito nesta categoria.', 'info')
+            return redirect(url_for('public.detalhe_evento', evento_id=evento.id))
 
-        # Primeiro, criamos e salvamos a inscrição
+        # Cria a nova inscrição, que agora é um simples vínculo
         nova_inscricao = Inscricao(
-            user_id=current_user.id,
-            nome_participante=form.nome_participante.data,
-            sobrenome_participante=form.sobrenome_participante.data,
-            idade=form.idade.data,
-            peso=form.peso.data,
-            graduacao=form.graduacao.data,
-            cpf=form.cpf.data,
-            telefone=form.telefone.data,
-            evento_id=evento.id,
-            equipe_id=form.equipe_id.data,
-            professor_responsavel=equipe_selecionada.professor_responsavel,
-            categoria_id=form.categoria_id.data
+            participante_id=participante.id,
+            categoria_id=categoria_id_selecionada,
+            registrado_por_user_id=current_user.id  # Guarda quem fez a inscrição
         )
         db.session.add(nova_inscricao)
         db.session.commit()
 
-        # Agora, verificamos se o evento é pago e tem uma chave Pix
+        # Lógica do pagamento Pix que já tínhamos
         if evento.preco > 0 and evento.pix_copia_e_cola:
-            # Se sim, usamos uma categoria especial no flash para ativar o JavaScript
-            # A mensagem do flash será a própria chave Pix!
             flash(evento.pix_copia_e_cola, 'show_pix_modal')
         else:
-            # Se não, mostramos uma mensagem de sucesso normal
             flash(f'Inscrição no evento "{evento.nome_evento}" realizada com sucesso!', 'success')
 
         return redirect(url_for('public.index'))
-        # --- FIM DA LÓGICA ALTERADA ---
 
-    return render_template('inscrever_evento.html', title=f"Inscrição: {evento.nome_evento}", form=form, evento=evento)
+    return render_template('inscrever_evento.html',
+                           title=f"Inscrição: {evento.nome_evento}",
+                           form=form,
+                           evento=evento)
+
 
 @public_bp.route('/evento/<int:evento_id>')
 def detalhe_evento(evento_id):

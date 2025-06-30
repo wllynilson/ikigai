@@ -9,10 +9,10 @@ from sqlalchemy.orm import joinedload
 
 from app.decorators import admin_required
 from . import bp  # Importa o 'bp' do __init__.py do admin
-from .forms import CategoriaForm, AdminEditarInscricaoForm
+from .forms import CategoriaForm, AdminEditarInscricaoForm, EditarParticipanteForm
 from .forms import EditarInscricaoForm, EventoForm  # 'from .' pois assumo que forms.py está na mesma pasta admin
 from .. import db  # '..' sobe um nível para o pacote 'app' para pegar o 'db'
-from ..models import Categoria
+from ..models import Categoria, Participante, Pagamento
 from ..models import Evento, Equipe, Inscricao, User, Luta
 from app.services import gerar_chave_eliminatoria_simples
 from collections import defaultdict
@@ -248,26 +248,21 @@ def gerenciar_inscricoes():
     evento_filtro_id = request.args.get('evento_id')
 
     query = Inscricao.query.options(
-        joinedload(Inscricao.participante),
-        joinedload(Inscricao.evento),
-        joinedload(Inscricao.equipe)
+        joinedload(Inscricao.participante).joinedload(Participante.equipe),
+        joinedload(Inscricao.categoria).joinedload(Categoria.evento)
     )
 
     if termo_pesquisa:
         # Corrigido para não usar ILIKE em campo inteiro
-        query = query.join(User, Inscricao.user_id == User.id).filter(
+        query = query.join(Inscricao.participante).filter(
             or_(
-                # Remova ou converta user_id para texto
-                # func.cast(Inscricao.user_id, String).ilike(f'%{termo_pesquisa}%'),
-                User.username.ilike(f'%{termo_pesquisa}%'),
-                User.nome_completo.ilike(f'%{termo_pesquisa}%'),
-                User.cpf.ilike(f'%{termo_pesquisa}%'),
-                User.email.ilike(f'%{termo_pesquisa}%')
+                Participante.nome_completo.ilike(f'%{termo_pesquisa}%'),
+                Participante.cpf.ilike(f'%{termo_pesquisa}%')
             )
         )
 
     if evento_filtro_id:
-        query = query.filter(Inscricao.evento_id == evento_filtro_id)
+        query = query.join(Inscricao.categoria).filter(Categoria.evento_id == evento_filtro_id)
 
     inscricoes_paginadas = query.order_by(Inscricao.data_inscricao.desc()).paginate(
         page=page, per_page=10, error_out=False
@@ -303,72 +298,79 @@ def cancelar_inscricao(inscricao_id):
 @admin_required
 def aprovar_inscricao(inscricao_id):
     inscricao = Inscricao.query.get_or_404(inscricao_id)
+    if inscricao.status != 'Pendente':
+        return jsonify({'status': 'info', 'message': 'Esta inscrição já foi processada.'}), 200
 
-    if inscricao.status == 'Aprovada':
-        # Se já estiver aprovada, apenas informa. Código de sucesso 200.
-        return jsonify({'status': 'info', 'message': 'Esta inscrição já estava aprovada.'}), 200
     try:
+        # 1. Muda o status da inscrição
         inscricao.status = 'Aprovada'
+
+        # 2. Cria o registo de pagamento correspondente
+        novo_pagamento = Pagamento(
+            valor=inscricao.categoria.evento.preco,
+            metodo='Confirmacao Manual',  # Pode ser 'Pix', 'Dinheiro', etc.
+            status_pagamento='Concluido',
+            inscricao_id=inscricao.id  # Liga o pagamento a esta inscrição
+        )
+        db.session.add(novo_pagamento)
         db.session.commit()
-        # A resposta de sucesso agora é em JSON
-        return jsonify({'status': 'success', 'message': 'Inscrição aprovada com sucesso!', 'novo_status_html': '<span class="badge badge-success">Aprovada</span>'})
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Inscrição aprovada com sucesso!',
+            'novo_status_html': '<span class="badge badge-success">Aprovada</span>'
+        })
     except Exception as e:
         db.session.rollback()
-        # A resposta de erro também é em JSON. Código de erro 500.
         return jsonify({'status': 'error', 'message': f'Ocorreu um erro: {str(e)}'}), 500
 
 
 @bp.route('/inscricao/rejeitar/<int:inscricao_id>', methods=['POST'])
 @admin_required
 def rejeitar_inscricao(inscricao_id):
-    """
-    Encontra uma inscrição e altera o seu status para 'Rejeitada'.
-    """
     inscricao = Inscricao.query.get_or_404(inscricao_id)
-    if inscricao.status == 'Rejeitada':
-        return jsonify({'status': 'info', 'message': 'Esta inscrição já estava rejeitada.'}), 200
+    if inscricao.status != 'Pendente':
+        return jsonify({'status': 'info', 'message': 'Esta inscrição já foi processada.'}), 200
+
     try:
         inscricao.status = 'Rejeitada'
         db.session.commit()
-        # A resposta de sucesso é em JSON com o novo HTML do badge
-        return jsonify({'status': 'success', 'message': 'Inscrição rejeitada.',
-                        'novo_status_html': '<span class="badge badge-danger">Rejeitada</span>'})
+        return jsonify({
+            'status': 'success',
+            'message': 'Inscrição rejeitada.',
+            'novo_status_html': '<span class="badge badge-danger">Rejeitada</span>'
+        })
     except Exception as e:
         db.session.rollback()
         return jsonify({'status': 'error', 'message': f'Ocorreu um erro: {str(e)}'}), 500
 
-
 @bp.route('/inscricao/editar/<int:inscricao_id>', methods=['GET', 'POST'])
 @admin_required
 def editar_inscricao(inscricao_id):
-    # Busca a inscrição específica que queremos editar
     inscricao = Inscricao.query.get_or_404(inscricao_id)
+    participante = inscricao.participante
 
-    # Se for um pedido GET, pré-preenche o formulário com os dados do objeto 'inscricao'
-    # Se for um pedido POST, o WTForms irá carregar os dados do request automaticamente
-    form = AdminEditarInscricaoForm(obj=inscricao if request.method == 'GET' else None)
+    if not participante:
+        flash('Erro: Inscrição sem participante associado.', 'danger')
+        return redirect(url_for('admin.gerenciar_inscricoes'))
 
-    # Popula o dropdown com as categorias do evento específico da inscrição
-    form.categoria_id.choices = [
-        (c.id, c.nome) for c in Categoria.query.filter_by(
-            evento_id=inscricao.evento_id
-        ).order_by(Categoria.nome).all()
-    ]
+    form = EditarParticipanteForm(obj=participante)
+    # Popula o dropdown de equipes
+    form.equipe_id.choices = [(e.id, e.nome_equipe) for e in Equipe.query.order_by('nome_equipe').all()]
 
     if form.validate_on_submit():
         try:
-            # Pega nos dados do formulário e atualiza o objeto 'inscricao'
-            form.populate_obj(inscricao)
+            # Pega os dados do formulário e atualiza o objeto 'participante'
+            form.populate_obj(participante)
             db.session.commit()
-            flash('Inscrição atualizada com sucesso!', 'success')
-            # Redireciona de volta para a lista de inscrições do evento
-            return redirect(url_for('admin.listar_inscricoes_evento', evento_id=inscricao.evento_id))
+            flash(f'Dados do participante {participante.nome_completo} atualizados com sucesso!', 'success')
+            return redirect(url_for('admin.gerenciar_inscricoes'))
         except Exception as e:
             db.session.rollback()
-            flash(f'Erro ao atualizar inscrição: {e}', 'danger')
+            flash(f'Erro ao atualizar participante: {e}', 'danger')
 
     return render_template('admin/admin_editar_inscricao.html',
-                           titulo="Editar Inscrição",
+                           titulo=f"Editar Participante",
                            form=form,
                            inscricao=inscricao)
 

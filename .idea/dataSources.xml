@@ -67,7 +67,7 @@
         </library>
       </libraries>
     </data-source>
-    <data-source source="LOCAL" name="app" uuid="60e269c9-48fe-4870-ad96-d385c47a3ac4">
+    <data-source source="LOCAL" name="app" uuid="7c4f8d01-034e-4313-82ec-816f464f98b3">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>

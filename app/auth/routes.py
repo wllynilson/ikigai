@@ -5,7 +5,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from app import db  # Importe o db
 from app.auth.forms import EditarPerfilForm
 from app.auth.forms import LoginForm, RegistrationForm
-from app.models import User
+from app.models import User, Participante, Equipe  # Importe todos os modelos necessários
 
 auth_bp = Blueprint('auth', __name__, template_folder='templates')
 
@@ -88,27 +88,48 @@ def editar_perfil():
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    # Se o utilizador já estiver logado, não deve poder registar-se novamente
     if current_user.is_authenticated:
         return redirect(url_for('public.index'))
 
     form = RegistrationForm()
+    # Popula o menu dropdown com as equipas existentes
+    form.equipe_id.choices = [(e.id, e.nome_equipe) for e in Equipe.query.order_by('nome_equipe').all()]
+
     if form.validate_on_submit():
-        # Cria a nova instância de User com os dados do formulário
+        # Cria primeiro o objeto User
         user = User(
             username=form.username.data,
             email=form.email.data,
             nome_completo=form.nome_completo.data,
-            cpf=form.cpf.data,
-            telefone=form.telefone.data
+            role='user'  # Garante que o papel padrão é 'user'
         )
-        user.set_password(form.password.data)  # Cifra a palavra-passe
+        user.set_password(form.password.data)
 
-        # O 'role' será 'user' por defeito, como definimos no modelo
-        db.session.add(user)
-        db.session.commit()
+        # Cria o objeto Participante com os dados restantes
+        participante = Participante(
+            nome_completo=form.nome_completo.data,
+            cpf=form.cpf.data,
+            telefone=form.telefone.data,
+            data_nascimento=form.data_nascimento.data,
+            peso=form.peso.data,
+            graduacao=form.graduacao.data,
+            equipe_id=form.equipe_id.data
+        )
 
-        flash('Parabéns, o seu registo foi efetuado com sucesso!', 'success')
-        return redirect(url_for('auth.login'))  # Redireciona para a página de login
+        # Liga os dois objetos através da relação que definimos no modelo
+        user.participante = participante
+
+        try:
+            # Ao adicionar o user, a relação com o participante (se configurada com cascade)
+            # pode adicioná-lo automaticamente, mas adicionamos ambos para garantir.
+            db.session.add(user)
+            db.session.add(participante)
+            db.session.commit()
+
+            flash('Parabéns, a sua conta de usuário e perfil de atleta foram criados com sucesso!', 'success')
+            return redirect(url_for('auth.login'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ocorreu um erro ao criar a sua conta: {e}', 'danger')
 
     return render_template('auth/register.html', title='Registar', form=form)

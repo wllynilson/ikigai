@@ -3,105 +3,93 @@
 {% block title %}Crie a sua Conta{% endblock %}
 
 {% block content %}
-<div class="login-container">
-    <div class="login-card">
-        <div class="login-form-column">
-            <div class="login-form-content">
-                <h2 class="login-title">Crie a sua Conta</h2>
-                <p class="login-subtitle">Junte-se à nossa comunidade de eventos.</p>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-form-column">
+                <div class="login-form-content">
+                    <h2 class="login-title">Crie a sua Conta de Atleta</h2>
+                    <p class="login-subtitle">Preencha os seus dados de acesso e de perfil.</p>
+                    <form method="POST" action="" novalidate>
+                        {{ form.hidden_tag() }}
 
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} mb-3">{{ message }}</div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-
-                <form method="POST" action="" novalidate>
-                    {{ form.hidden_tag() }} <div class="form-group">
-                        {{ form.username.label(class="form-label") }}
-                        {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
-                        {% for error in form.username.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
-                    </div>
-
-                    <div class="form-group">
-                        {{ form.email.label(class="form-label") }}
-                        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
-                        {% for error in form.email.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
-                    </div>
-
-                    <div class="form-group">
-                        {{ form.nome_completo.label(class="form-label") }}
-                        {{ form.nome_completo(class="form-control" + (" is-invalid" if form.nome_completo.errors else "")) }}
-                        {% for error in form.nome_completo.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            {{ form.cpf.label(class="form-label") }}
-                            {{ form.cpf(class="form-control" + (" is-invalid" if form.cpf.errors else "")) }}
-                            {% for error in form.cpf.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        <h5 class="mt-4">Dados de Acesso</h5>
+                        <div class="form-group">{{ form.username.label(class="form-label") }} {{ form.username(class="form-control") }}</div>
+                        <div class="form-group">{{ form.email.label(class="form-label") }} {{ form.email(class="form-control") }}</div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">{{ form.password.label(class="form-label") }} {{ form.password(class="form-control") }}</div>
+                            <div class="form-group col-md-6">{{ form.password2.label(class="form-label") }} {{ form.password2(class="form-control") }}</div>
                         </div>
-                        <div class="form-group col-md-6">
-                            {{ form.telefone.label(class="form-label") }}
-                            {{ form.telefone(class="form-control" + (" is-invalid" if form.telefone.errors else "")) }}
-                            {% for error in form.telefone.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
-                        </div>
-                    </div>
 
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            {{ form.password.label(class="form-label") }}
-                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
-                            {% for error in form.password.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        <h5 class="mt-4 mb-3">Dados de Perfil do Atleta</h5>
+                        <div class="form-group mb-3">
+                            {{ form.nome_completo.label(class="form-label fw-semibold") }}
+                            {{ form.nome_completo(class="form-control", placeholder="Digite seu nome completo") }}
                         </div>
-                        <div class="form-group col-md-6">
-                            {{ form.password2.label(class="form-label") }}
-                            {{ form.password2(class="form-control" + (" is-invalid" if form.password2.errors else "")) }}
-                            {% for error in form.password2.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.cpf.label(class="form-label fw-semibold") }}
+                                {{ form.cpf(class="form-control", placeholder="000.000.000-00") }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.telefone.label(class="form-label fw-semibold") }}
+                                {{ form.telefone(class="form-control", placeholder="(00) 00000-0000") }}
+                            </div>
                         </div>
-                    </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.data_nascimento.label(class="form-label fw-semibold") }}
+                                {{ form.data_nascimento(class="form-control", placeholder="DD/MM/AAAA") }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.peso.label(class="form-label fw-semibold") }}
+                                {{ form.peso(class="form-control", placeholder="00,0") }}
+                            </div>
+                        </div>
 
-                    {{ form.submit(class="btn-login mt-3") }}
-                </form>
-
-                <div class="login-footer-text">
-                    Já tem uma conta? <a href="{{ url_for('auth.login') }}">Faça o login</a>
+                        <div class="form-group mb-4">
+                            {{ form.graduacao.label(class="form-label fw-semibold") }}
+                            {{ form.graduacao(class="form-control") }}
+                        </div>
+                        <div class="form-group mb-4">
+                            {{ form.equipe_id.label(class="form-label fw-semibold") }}
+                            {{ form.equipe_id(class="form-control") }}
+                        </div>
+                        <div class="form-group mt-4">{{ form.submit(class="btn-login") }}</div>
+                    </form>
+                    <div class="login-footer-text">Já tem uma conta? <a href="{{ url_for('auth.login') }}">Faça o
+                        login</a></div>
                 </div>
             </div>
-        </div>
-
-        <div class="login-image-column">
+            <div class="login-image-column"></div>
         </div>
     </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
-    {{ super() }} <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Máscara para o campo CPF
-        const cpfElement = document.getElementById('cpf');
-        if (cpfElement) {
-            const cpfMaskOptions = {
-                mask: '000.000.000-00'
-            };
-            IMask(cpfElement, cpfMaskOptions);
-        }
+    {{ super() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Máscara para o campo CPF
+            const cpfElement = document.getElementById('cpf');
+            if (cpfElement) {
+                const cpfMaskOptions = {
+                    mask: '000.000.000-00'
+                };
+                IMask(cpfElement, cpfMaskOptions);
+            }
 
-        // Máscara para o campo Telefone
-        const telefoneElement = document.getElementById('telefone');
-        if (telefoneElement) {
-            // Opções para aceitar tanto telemóveis com 8 ou 9 dígitos
-            const telefoneMaskOptions = {
-                mask: [
-                    { mask: '(00) 0000-0000' },
-                    { mask: '(00) 00000-0000' }
-                ]
-            };
-            IMask(telefoneElement, telefoneMaskOptions);
-        }
-    });
+            // Máscara para o campo Telefone
+            const telefoneElement = document.getElementById('telefone');
+            if (telefoneElement) {
+                // Opções para aceitar tanto telemóveis com 8 ou 9 dígitos
+                const telefoneMaskOptions = {
+                    mask: [
+                        {mask: '(00) 0000-0000'},
+                        {mask: '(00) 00000-0000'}
+                    ]
+                };
+                IMask(telefoneElement, telefoneMaskOptions);
+            }
+        });
     </script>
 {% endblock %}

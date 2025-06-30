@@ -5,17 +5,9 @@ from wtforms.validators import DataRequired, Length, NumberRange
 
 
 class InscricaoEventoForm(FlaskForm):
-    # Usamos 'coerce=int' para garantir que o valor enviado seja um número inteiro
-    nome_participante = StringField('Nome', validators=[DataRequired()])
-    sobrenome_participante = StringField('Sobrenome', validators=[DataRequired()])
-    idade = IntegerField('Idade', validators=[DataRequired()])
-    peso = IntegerField('Peso', validators=[DataRequired()])
-    graduacao = StringField('Graduação', validators=[DataRequired()])
-    cpf = StringField('CPF', validators=[DataRequired()])
-    telefone = StringField('Telefone', validators=[DataRequired()])
-    equipe_id = SelectField('Equipe', coerce=int, validators=[DataRequired()])
-    categoria_id = SelectField('Categoria', coerce=int, validators=[DataRequired()])
-    submit = SubmitField('Inscrever-se')
+    """Formulário simplificado para um utilizador logado se inscrever num evento."""
+    categoria_id = SelectField('Selecione a Categoria para competir', coerce=int, validators=[DataRequired()])
+    submit = SubmitField('Confirmar Minha Inscrição')
 
 class InscricaoTerceiroForm(FlaskForm):
     """Formulário para um utilizador logado inscrever outra pessoa."""
