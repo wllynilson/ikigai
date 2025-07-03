@@ -1,21 +1,23 @@
 import math
+from collections import defaultdict
 from datetime import datetime
 
 from flask import jsonify
 from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user, login_user
+from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 
 from app.decorators import admin_required
+from app.services import gerar_chave_eliminatoria_simples
 from . import bp  # Importa o 'bp' do __init__.py do admin
-from .forms import CategoriaForm, AdminEditarInscricaoForm, EditarParticipanteForm
-from .forms import EditarInscricaoForm, EventoForm  # 'from .' pois assumo que forms.py está na mesma pasta admin
+from .forms import CategoriaForm, EditarParticipanteForm
+from .forms import EventoForm  # 'from .' pois assumo que forms.py está na mesma pasta admin
 from .. import db  # '..' sobe um nível para o pacote 'app' para pegar o 'db'
 from ..models import Categoria, Participante, Pagamento
 from ..models import Evento, Equipe, Inscricao, User, Luta
-from app.services import gerar_chave_eliminatoria_simples
-from collections import defaultdict
+
 
 # --- LOGIN AUTOMÁTICO EM DESENVOLVIMENTO ---
 @bp.before_request
@@ -178,14 +180,19 @@ def gerenciar_eventos():
 def listar_inscricoes_evento(evento_id):
     evento = Evento.query.get_or_404(evento_id)
 
-    # --- CONSULTA OTIMIZADA COM JOIN ---
-    inscricoes = Inscricao.query.options(
-        joinedload(Inscricao.participante),  # Junta a tabela 'users' através da relação 'participante'
-        joinedload(Inscricao.equipe)  # Junta a tabela 'equipes' através da relação 'equipe'
-    ).filter_by(evento_id=evento.id).order_by(Inscricao.data_inscricao).all()
+    # --- CONSULTA CORRIGIDA E OTIMIZADA ---
+    # Usamos join() para ligar Inscricao a Categoria e filtramos pelo evento_id que está em Categoria
+    inscricoes = Inscricao.query.join(Categoria).filter(
+        Categoria.evento_id == evento.id
+    ).options(
+        # Usamos joinedload para também buscar os dados relacionados de forma eficiente
+        joinedload(Inscricao.participante).joinedload(Participante.equipe),
+        joinedload(Inscricao.categoria)
+    ).order_by(Inscricao.data_inscricao).all()
 
-    return render_template('admin/admin_listar_inscricoes_evento.html', evento=evento, inscricoes=inscricoes)
-
+    return render_template('admin/admin_listar_inscricoes_evento.html',
+                           evento=evento,
+                           inscricoes=inscricoes)
 
 @bp.route('/eventos/novo', methods=['GET', 'POST'])
 @login_required
@@ -443,7 +450,13 @@ def categorias_evento(evento_id):
         return redirect(url_for('admin.categorias_evento', evento_id=evento.id))
 
     # Lógica para exibir as categorias existentes
-    categorias_do_evento = Categoria.query.filter_by(evento_id=evento.id).order_by(Categoria.nome).all()
+    categorias_do_evento = db.session.query(
+        Categoria,
+        func.count(Luta.id).label('num_lutas')
+    ).outerjoin(Luta, Categoria.id == Luta.categoria_id) \
+        .filter(Categoria.evento_id == evento.id) \
+        .group_by(Categoria.id) \
+        .order_by(Categoria.nome).all()
 
     return render_template('admin/admin_gerenciar_categorias.html',
                            titulo=f"Categorias de {evento.nome_evento}",

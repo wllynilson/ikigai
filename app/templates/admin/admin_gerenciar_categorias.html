@@ -13,7 +13,7 @@
                 <div class="card-body">
                     {% if categorias %}
                         <ul class="list-group">
-                            {% for categoria in categorias %}
+                            {% for categoria, num_lutas in categorias %}
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
                                         <strong>{{ categoria.nome }}</strong><br>
@@ -21,7 +21,7 @@
                                             Aprovados: {{ categoria.inscricoes.filter_by(status='Aprovada').count() }}</small>
                                     </div>
                                     <div class="btn-group btn-group-sm">
-                                        {% if categoria.lutas.count() > 0 %}
+                                        {% if num_lutas > 0 %}
                                             <a href="{{ url_for('admin.visualizar_chave', categoria_id=categoria.id) }}"
                                                class="btn btn-success">
                                                 <i class="fas fa-eye"></i> Visualizar Chave

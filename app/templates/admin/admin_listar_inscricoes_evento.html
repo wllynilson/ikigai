@@ -25,13 +25,13 @@
             {% for inscricao in inscricoes %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{{ inscricao.participante.nome_completo }}</td>
+                <td>{{ inscricao.participante.equipe.nome_equipe }}</td>
                 <td>{{ inscricao.participante.cpf }}</td>
                 <td>{{ inscricao.participante.telefone }}</td>
                 <td>
-                    {% if inscricao.equipe.nome_equipe %}
-                        {{ inscricao.equipe.nome_equipe }} 
-                        <small>(Prof. {{ inscricao.equipe.professor_responsavel }})</small>
+                    {% if inscricao.participante.equipe.nome_equipe %}
+                        {{ inscricao.participante.equipe.nome_equipe }}
+                        <small>(Prof. {{ inscricao.participante.equipe.professor_responsavel }})</small>
                     {% else %}
                         Equipe não informada
                     {% endif %}

@@ -78,7 +78,9 @@
 
                             <td class="text-center">
                                 <div class="btn-group" role="group">
-                                    <a href="{{ url_for('admin.editar_inscricao', inscricao_id=inscricao.id) }}" class="btn btn-primary btn-sm" title="Editar Inscrição"><i class="fas fa-pencil-alt"></i></a>
+                                    <a href="{{ url_for('admin.editar_inscricao', inscricao_id=inscricao.id) }}"
+                                       class="btn btn-primary btn-sm" title="Editar Inscrição"><i
+                                            class="fas fa-pencil-alt"></i></a>
 
                                     {% if inscricao.status == 'Pendente' %}
                                         <form class="d-inline" data-action="approve-form"
@@ -160,7 +162,14 @@
                         const actionCell = form.parentElement;
                         actionCell.innerHTML = '<span class="text-muted">A processar...</span>';
 
-                        fetch(url, {method: 'POST'})
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                // Adiciona o token CSRF ao cabeçalho do pedido
+                                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            }
+                        })
                             .then(response => response.json())
                             .then(data => {
                                 if (data.status === 'success') {
