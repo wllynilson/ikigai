@@ -30,9 +30,11 @@
                                             <form method="POST"
                                                   action="{{ url_for('admin.gerar_chave', categoria_id=categoria.id) }}"
                                                   onsubmit="return confirm('Isto irá apagar qualquer chave existente e gerar uma nova. Deseja continuar?');">
-                                                <button type="submit" class="btn btn-warning">
+                                                <button type="button" class="btn btn-warning"
+                                                        onclick="gerarChave({{ categoria.id }})">
                                                     <i class="fas fa-sitemap"></i> Gerar Chave
                                                 </button>
+
                                             </form>
                                         {% endif %}
 
@@ -89,4 +91,52 @@
         <a href="{{ url_for('admin.gerenciar_eventos') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i>
             Voltar para Eventos</a>
     </div>
+{% endblock %}
+
+
+{% block scripts %}
+    <script>
+        function gerarChave(categoriaId) {
+            if (!confirm('Isto irá apagar qualquer chave existente e gerar uma nova. Deseja continuar?')) {
+                return;
+            }
+
+            // Obter o token CSRF do meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+            // Mostrar indicador de carregamento
+            const btnGerar = event.target;
+            const originalText = btnGerar.innerHTML;
+            btnGerar.disabled = true;
+            btnGerar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
+
+            fetch(`/admin/categoria/${categoriaId}/gerar-chave`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Redirecionar para a visualização da chave
+                        window.location.href = data.redirect_url;
+                    } else {
+                        // Mostrar mensagem de erro
+                        alert(data.message);
+                        // Restaurar o botão
+                        btnGerar.disabled = false;
+                        btnGerar.innerHTML = originalText;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Ocorreu um erro ao gerar a chave de lutas.');
+                    // Restaurar o botão
+                    btnGerar.disabled = false;
+                    btnGerar.innerHTML = originalText;
+                });
+        }
+    </script>
 {% endblock %}

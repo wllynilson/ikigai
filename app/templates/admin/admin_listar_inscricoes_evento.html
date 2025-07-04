@@ -25,7 +25,7 @@
             {% for inscricao in inscricoes %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{{ inscricao.participante.equipe.nome_equipe }}</td>
+                <td>{{ inscricao.participante.nome_completo }}</td>
                 <td>{{ inscricao.participante.cpf }}</td>
                 <td>{{ inscricao.participante.telefone }}</td>
                 <td>

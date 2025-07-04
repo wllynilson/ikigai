@@ -11,10 +11,10 @@ from sqlalchemy.orm import joinedload
 
 from app.decorators import admin_required
 from app.services import gerar_chave_eliminatoria_simples
-from . import bp  # Importa o 'bp' do __init__.py do admin
+from . import bp
 from .forms import CategoriaForm, EditarParticipanteForm
-from .forms import EventoForm  # 'from .' pois assumo que forms.py está na mesma pasta admin
-from .. import db  # '..' sobe um nível para o pacote 'app' para pegar o 'db'
+from .forms import EventoForm
+from .. import db
 from ..models import Categoria, Participante, Pagamento
 from ..models import Evento, Equipe, Inscricao, User, Luta
 
@@ -305,31 +305,65 @@ def cancelar_inscricao(inscricao_id):
 @admin_required
 def aprovar_inscricao(inscricao_id):
     inscricao = Inscricao.query.get_or_404(inscricao_id)
+
     if inscricao.status != 'Pendente':
-        return jsonify({'status': 'info', 'message': 'Esta inscrição já foi processada.'}), 200
+        return jsonify({
+            'status': 'info',
+            'message': 'Esta inscrição já foi processada.'
+        }), 200
 
     try:
-        # 1. Muda o status da inscrição
+        # Verificar se já existe um pagamento
+        pagamento_existente = Pagamento.query.filter_by(inscricao_id=inscricao.id).first()
+
+        if pagamento_existente:
+            # Se já existe pagamento, apenas atualiza o status da inscrição
+            inscricao.status = 'Aprovada'
+            db.session.commit()
+
+            return jsonify({
+                'status': 'success',
+                'message': 'Inscrição aprovada com sucesso!',
+                'novo_status_html': '<span class="badge badge-success">Aprovada</span>'
+            })
+
+        # Se não existe pagamento, cria um novo
+        categoria = db.session.query(Categoria).get(inscricao.categoria_id)
+        if not categoria or not categoria.evento:
+            return jsonify({
+                'status': 'error',
+                'message': 'Categoria ou evento não encontrado'
+            }), 404
+
+        # Criar novo pagamento
+        novo_pagamento = Pagamento(
+            valor=categoria.evento.preco,
+            data_pagamento=datetime.utcnow(),
+            metodo='Confirmacao Manual',
+            status_pagamento='Concluido',
+            inscricao_id=inscricao.id
+        )
+
+        # Atualizar status da inscrição
         inscricao.status = 'Aprovada'
 
-        # 2. Cria o registo de pagamento correspondente
-        novo_pagamento = Pagamento(
-            valor=inscricao.categoria.evento.preco,
-            metodo='Confirmacao Manual',  # Pode ser 'Pix', 'Dinheiro', etc.
-            status_pagamento='Concluido',
-            inscricao_id=inscricao.id  # Liga o pagamento a esta inscrição
-        )
+        # Adicionar e commitar as mudanças
         db.session.add(novo_pagamento)
         db.session.commit()
 
         return jsonify({
             'status': 'success',
-            'message': 'Inscrição aprovada com sucesso!',
+            'message': 'Inscrição aprovada e pagamento registrado com sucesso!',
             'novo_status_html': '<span class="badge badge-success">Aprovada</span>'
         })
+
     except Exception as e:
         db.session.rollback()
-        return jsonify({'status': 'error', 'message': f'Ocorreu um erro: {str(e)}'}), 500
+        current_app.logger.error(f'Erro ao aprovar inscrição: {str(e)}')
+        return jsonify({
+            'status': 'error',
+            'message': 'Ocorreu um erro ao processar a aprovação'
+        }), 500
 
 
 @bp.route('/inscricao/rejeitar/<int:inscricao_id>', methods=['POST'])
@@ -523,25 +557,82 @@ def excluir_categoria(categoria_id):
 @bp.route('/categoria/<int:categoria_id>/gerar-chave', methods=['POST'])
 @admin_required
 def gerar_chave(categoria_id):
-    categoria = Categoria.query.get_or_404(categoria_id)
+    try:
+        # Buscar a categoria e validar
+        categoria = Categoria.query.get_or_404(categoria_id)
 
-    # Passo de segurança: apaga qualquer chave antiga para esta categoria
-    # para evitar duplicados se o admin gerar novamente.
-    Luta.query.filter_by(categoria_id=categoria_id).delete()
-    db.session.commit()
+        # Buscar todas as inscrições aprovadas para esta categoria
+        inscricoes_aprovadas = Inscricao.query.filter_by(
+            categoria_id=categoria.id,
+            status='Aprovada'
+        ).all()
 
-    # Chama a nossa função de serviço para fazer a magia
-    sucesso, mensagem = gerar_chave_eliminatoria_simples(
-        categoria_id=categoria.id,
-        evento_id=categoria.evento_id
-    )
+        # Verificar se há inscrições suficientes
+        if len(inscricoes_aprovadas) < 2:
+            return jsonify({
+                'status': 'error',
+                'message': 'São necessários pelo menos 2 participantes aprovados para gerar a chave.'
+            }), 400
 
-    if sucesso:
-        flash(mensagem, 'success')
-    else:
-        flash(mensagem, 'danger')
+        # Limpar lutas existentes da categoria
+        Luta.query.filter_by(categoria_id=categoria.id).delete()
 
-    return redirect(url_for('admin.categorias_evento', evento_id=categoria.evento_id))
+        # Extrair participantes das inscrições aprovadas
+        participantes = [inscricao.participante for inscricao in inscricoes_aprovadas]
+
+        # Embaralhar participantes para ordem aleatória
+        import random
+        random.shuffle(participantes)
+
+        # Calcular número de lutas necessárias
+        num_participantes = len(participantes)
+        num_rounds = (num_participantes - 1).bit_length()  # Próxima potência de 2
+        total_slots = 2 ** num_rounds
+
+        # Criar lutas do primeiro round
+        ordem = 1
+        for i in range(0, total_slots, 2):
+            luta = Luta(
+                categoria_id=categoria.id,
+                round=1,
+                ordem_na_chave=ordem
+            )
+
+            # Atribuir competidores se disponíveis
+            if i < num_participantes:
+                luta.competidor1_id = participantes[i].id
+            if i + 1 < num_participantes:
+                luta.competidor2_id = participantes[i + 1].id
+
+            db.session.add(luta)
+            ordem += 1
+
+        # Criar lutas vazias para rounds subsequentes
+        for round_num in range(2, num_rounds + 1):
+            lutas_no_round = 2 ** (num_rounds - round_num)
+            for i in range(lutas_no_round):
+                luta = Luta(
+                    categoria_id=categoria.id,
+                    round=round_num,
+                    ordem_na_chave=i + 1
+                )
+                db.session.add(luta)
+
+        db.session.commit()
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Chave de lutas gerada com sucesso!',
+            'redirect_url': url_for('admin.visualizar_chave', categoria_id=categoria.id)
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f'Erro ao gerar chave: {str(e)}')
+        return jsonify({
+            'status': 'error',
+            'message': 'Ocorreu um erro ao gerar a chave de lutas.'
+        }), 500
 
 
 @bp.route('/categoria/<int:categoria_id>/chave')
