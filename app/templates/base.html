@@ -31,6 +31,13 @@
             </ul>
 
             <ul class="navbar-nav">
+                <!-- Theme Toggle Button -->
+                <li class="nav-item">
+                    <button class="nav-link btn btn-link theme-toggle" id="themeToggle" title="Alternar tema">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                </li>
+                
                 {% if current_user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarUserDropdown" role="button"
@@ -125,8 +132,42 @@
 
     {% block scripts %}
     <script>
+    // Theme Toggle Functionality
     document.addEventListener('DOMContentLoaded', function() {
-        // O seletor correto agora é '.alert-show_pix_modal'
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const body = document.body;
+        
+        // Get saved theme from localStorage or default to 'light'
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        
+        // Function to update theme
+        function updateTheme(theme) {
+            body.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            // Update icon
+            if (theme === 'dark') {
+                themeIcon.className = 'fas fa-sun';
+                themeToggle.title = 'Alternar para modo claro';
+            } else {
+                themeIcon.className = 'fas fa-moon';
+                themeToggle.title = 'Alternar para modo escuro';
+            }
+        }
+        
+        // Initialize theme on page load
+        updateTheme(savedTheme);
+        
+        // Theme toggle click handler
+        themeToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            updateTheme(newTheme);
+        });
+        
+        // Original PIX modal functionality
         const pixFlashMessage = document.querySelector('.alert-show_pix_modal');
 
         if (pixFlashMessage) {
