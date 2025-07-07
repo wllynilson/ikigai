@@ -1115,30 +1115,107 @@ a.card-link, a.card-link:hover {
 }
 
 /* DARK MODE SUPPORT */
+/* System preference based dark mode */
 @media (prefers-color-scheme: dark) {
-    :root {
+    body:not([data-theme="light"]) {
         --primary-white: rgb(45, 45, 50);
         --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    body {
         background: linear-gradient(135deg, #2d2d32 0%, #1a1a1f 100%);
         color: #e0e0e0;
     }
 
-    .event-card,
-    .about-section,
-    .event-description,
-    .details-card {
+    body:not([data-theme="light"]) .event-card,
+    body:not([data-theme="light"]) .about-section,
+    body:not([data-theme="light"]) .event-description,
+    body:not([data-theme="light"]) .details-card {
         background: #3a3a3f;
         color: #e0e0e0;
     }
 
-    .event-text,
-    .about-text,
-    .detail-value {
+    body:not([data-theme="light"]) .event-text,
+    body:not([data-theme="light"]) .about-text,
+    body:not([data-theme="light"]) .detail-value {
         color: #c0c0c0;
     }
+
+    body:not([data-theme="light"]) .navbar-dark {
+        background-color: #1a1a1f !important;
+    }
+}
+
+/* Manual dark mode override */
+body[data-theme="dark"] {
+    --primary-white: rgb(45, 45, 50);
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #2d2d32 0%, #1a1a1f 100%);
+    color: #e0e0e0;
+}
+
+body[data-theme="dark"] .event-card,
+body[data-theme="dark"] .about-section,
+body[data-theme="dark"] .event-description,
+body[data-theme="dark"] .details-card {
+    background: #3a3a3f;
+    color: #e0e0e0;
+}
+
+body[data-theme="dark"] .event-text,
+body[data-theme="dark"] .about-text,
+body[data-theme="dark"] .detail-value {
+    color: #c0c0c0;
+}
+
+body[data-theme="dark"] .navbar-dark {
+    background-color: #1a1a1f !important;
+}
+
+/* Light mode explicit styles */
+body[data-theme="light"] {
+    --primary-white: #ffffff;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #333;
+}
+
+body[data-theme="light"] .event-card,
+body[data-theme="light"] .about-section,
+body[data-theme="light"] .event-description,
+body[data-theme="light"] .details-card {
+    background: white;
+    color: #333;
+}
+
+body[data-theme="light"] .event-text,
+body[data-theme="light"] .about-text,
+body[data-theme="light"] .detail-value {
+    color: #555;
+}
+
+body[data-theme="light"] .navbar-dark {
+    background-color: #343a40 !important;
+}
+
+/* Theme toggle button styles */
+.theme-toggle {
+    background: none !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 1.1rem;
+    padding: 0.5rem 0.75rem !important;
+    border-radius: 50% !important;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.theme-toggle:hover {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: scale(1.1);
+}
+
+.theme-toggle:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3) !important;
 }
 
 /* Ficheiro: app/static/css/estilos_publicos.css */
