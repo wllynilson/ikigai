@@ -3,12 +3,10 @@
 
 {% block title %}Gerenciar Eventos - Admin{% endblock %}
 
-{% block page_title %}Gerenciar Eventos{% endblock %}
+{% block page_title %} {{ titulo }}{% endblock %}
 
 {% block content %}
     <div class="container">
-        <h1 class="mt-4 mb-4">{{ titulo }}</h1>
-
 
         <div class="card bg-light mb-4">
             <div class="card-body">
@@ -148,53 +146,58 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const tableBody = document.querySelector('table tbody');
-            if (tableBody) {
-                tableBody.addEventListener('submit', function (event) {
-                    const form = event.target;
-                    if (form && form.dataset.action) {
-                        event.preventDefault();
+            if (!tableBody) return;
 
-                        if (form.dataset.action === 'cancel-form') {
-                            if (!confirm('Tem a certeza que deseja excluir esta inscrição?')) return;
-                        }
+            tableBody.addEventListener('submit', function (event) {
+                const form = event.target;
+                if (!form.dataset.action) return;
+                event.preventDefault();
 
-                        const url = form.action;
-                        const actionCell = form.parentElement;
-                        actionCell.innerHTML = '<span class="text-muted">A processar...</span>';
+                if (form.dataset.action === 'cancel-form' &&
+                    !confirm('Tem a certeza que deseja excluir esta inscrição?')) {
+                    return;
+                }
 
-                        fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                // Adiciona o token CSRF ao cabeçalho do pedido
-                                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                            }
-                        })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.status === 'success') {
-                                    const inscricaoRow = form.closest('tr');
-                                    if (data.action === 'delete') { // Para uma futura ação de apagar
-                                        inscricaoRow.remove();
-                                    } else {
-                                        // Para 'approve' e 'reject'
-                                        const statusCell = inscricaoRow.querySelector('.status-cell');
-                                        statusCell.innerHTML = data.novo_status_html;
-                                        actionCell.innerHTML = '<span class="text-success font-weight-bold">Concluído</span>';
-                                    }
-                                } else {
-                                    alert(data.message);
-                                    actionCell.innerHTML = form.innerHTML;
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Erro:', error);
-                                alert('Ocorreu um erro de comunicação.');
-                                actionCell.innerHTML = form.innerHTML;
-                            });
+                const url = form.action;
+                const actionCell = form.parentElement;
+                actionCell.innerHTML = '<span class="text-muted">A processar...</span>';
+
+                fetch(url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-CSRFToken': document
+                            .querySelector('meta[name="csrf-token"]')
+                            .getAttribute('content')
                     }
-                });
-            }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Status HTTP: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const row = form.closest('tr');
+                            if (data.action === 'delete') {
+                                row.remove();
+                            } else {
+                                row.querySelector('.status-cell')
+                                    .innerHTML = data.novo_status_html;
+                                actionCell.innerHTML =
+                                    '<span class="text-success font-weight-bold">Concluído</span>';
+                            }
+                        } else {
+                            throw new Error(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        alert('Ocorreu um erro de comunicação.');
+                        actionCell.innerHTML = form.innerHTML;
+                    });
+            });
         });
     </script>
 {% endblock %}

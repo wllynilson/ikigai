@@ -183,8 +183,10 @@ body {
     flex-direction: column;
     min-width: 260px;
     width: 260px;
-    height: 260px;
+    height: 380px;
     flex-shrink: 0;
+    position: relative;
+    border: 1px solid rgba(214, 58, 38, 0.1);
 }
 
 .event-card:hover {
@@ -210,7 +212,7 @@ body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
 }
 
 .event-title {
@@ -224,7 +226,8 @@ body {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    height: 2.6rem;
+    min-height: 2.6rem;
+    max-height: 3rem;
 }
 
 .event-speaker {
@@ -287,8 +290,20 @@ body {
 
 .event-price-compact {
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 900;
     color: var(--primary-red);
+    background: rgba(214, 58, 38, 0.08);
+    padding: 0.3rem 0.9rem;
+    border-radius: 18px;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 8px rgba(214, 58, 38, 0.10);
+    display: inline-block;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.event-price-compact:hover {
+    background: rgba(214, 58, 38, 0.18);
+    box-shadow: 0 4px 16px rgba(214, 58, 38, 0.18);
 }
 
 .btn-subscribe-compact {
@@ -332,18 +347,14 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    max-width: 380px;
-    margin: 0 auto;
+    min-width: 260px;
+    height: 400px;
+    position: relative;
+    border: 1px solid rgba(214, 58, 38, 0.1);;
 }
-
 .event-card-full:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.event-card-full .event-image {
-    height: 200px;
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
 }
 
 .event-card-full .event-body {
@@ -351,7 +362,7 @@ body {
 }
 
 .event-card-full .event-title {
-    font-size: 1.4rem;
+    font-size: 1.1rem;
 }
 
 .event-card-full .event-speaker {
@@ -359,7 +370,7 @@ body {
 }
 
 .event-card-full .event-description {
-    font-size: 0.95rem;
+    font-size: 0.80rem;
     -webkit-line-clamp: 3;
 }
 
@@ -501,13 +512,6 @@ body {
     max-width: 700px;
 }
 
-.event-speaker {
-    font-size: clamp(1.1rem, 2.5vw, 1.6rem);
-    margin-bottom: 0;
-    opacity: 0.95;
-    font-weight: 300;
-    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
-}
 
 /* Container Principal */
 .event-content {
@@ -1270,7 +1274,7 @@ a.card-link, a.card-link:hover {
     height: 130px;
     border-radius: 50%;
     border: 4px solid white;
-    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
     object-fit: cover;
     margin-bottom: 1rem;
 }
@@ -1310,4 +1314,66 @@ a.card-link, a.card-link:hover {
 
 .profile-info-card .list-group-item strong {
     color: #333;
+}
+
+/* ===========================================
+   NOVO ESTILO: Botão “Ver Detalhes” no Índice
+   =========================================== */
+.btn-details {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-red);
+    color: white;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 25px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
+}
+
+.btn-details i {
+    margin-right: 0.5rem;
+    font-size: 1rem;
+}
+
+.btn-details:hover {
+    background: var(--dark-red);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    color: #fff;
+}
+
+/* ===================================
+   AJUSTES NA TELA DE DETALHE DE EVENTO
+   =================================== */
+/* Garante que o conteúdo principal e a coluna de informações fiquem mais juntinhos em telas médias */
+@media (min-width: 768px) {
+    .content-grid {
+        grid-template-columns: 2fr 1fr;
+        gap: 3rem;
+    }
+}
+
+/* Mais espaçamento interno no cartão de detalhes */
+.details-body {
+    padding: 2rem 1.5rem;
+}
+
+/* Único grid para itens de detalhe */
+.details-body {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+}
+
+/* Melhora o título das seções */
+.section-title {
+    font-size: 2rem;
+    margin-bottom: 2rem;
 }

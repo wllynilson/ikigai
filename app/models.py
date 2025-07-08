@@ -86,6 +86,7 @@ class Evento(db.Model):
     preco = db.Column(db.Float, default=0.0)
     numero_vagas = db.Column(db.Integer, nullable=False)
     pix_copia_e_cola = db.Column(db.Text)
+    slug = db.Column(db.String(255), unique=True, index=True, nullable=False)
 
     categorias = db.relationship('Categoria', backref='evento', lazy='dynamic', cascade="all, delete-orphan")
 

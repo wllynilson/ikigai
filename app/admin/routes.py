@@ -2,7 +2,7 @@ import math
 from collections import defaultdict
 from datetime import datetime
 
-from flask import jsonify
+from flask import jsonify, abort
 from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user, login_user
 from sqlalchemy import func
@@ -17,6 +17,7 @@ from .forms import EventoForm
 from .. import db
 from ..models import Categoria, Participante, Pagamento
 from ..models import Evento, Equipe, Inscricao, User, Luta
+from slugify import slugify
 
 
 # --- LOGIN AUTOMÁTICO EM DESENVOLVIMENTO ---
@@ -175,24 +176,14 @@ def gerenciar_eventos():
     return render_template('admin/admin_gerenciar_eventos.html', eventos=eventos)
 
 
-@bp.route('/eventos/<int:evento_id>/inscricoes')
+@bp.route('/eventos/<int:evento_id>/<string:slug>/inscricoes')
 @admin_required
-def listar_inscricoes_evento(evento_id):
+def listar_inscricoes_evento(evento_id, slug):
     evento = Evento.query.get_or_404(evento_id)
-
-    # --- CONSULTA CORRIGIDA E OTIMIZADA ---
-    # Usamos join() para ligar Inscricao a Categoria e filtramos pelo evento_id que está em Categoria
-    inscricoes = Inscricao.query.join(Categoria).filter(
-        Categoria.evento_id == evento.id
-    ).options(
-        # Usamos joinedload para também buscar os dados relacionados de forma eficiente
-        joinedload(Inscricao.participante).joinedload(Participante.equipe),
-        joinedload(Inscricao.categoria)
-    ).order_by(Inscricao.data_inscricao).all()
-
-    return render_template('admin/admin_listar_inscricoes_evento.html',
-                           evento=evento,
-                           inscricoes=inscricoes)
+    if evento.slug != slug:
+        abort(404)
+    inscricoes = Inscricao.query.filter_by(evento_id=evento_id).all()
+    return render_template('admin/listar_inscricoes.html', inscricoes=inscricoes, evento=evento)
 
 @bp.route('/eventos/novo', methods=['GET', 'POST'])
 @login_required
@@ -201,6 +192,7 @@ def novo_evento():
     if form.validate_on_submit():
         novo_evento = Evento()
         form.populate_obj(novo_evento)  # Popula o objeto com os dados do form
+        novo_evento.slug = slugify(novo_evento.nome_evento)
         try:
             db.session.add(novo_evento)
             db.session.commit()
@@ -213,15 +205,16 @@ def novo_evento():
     return render_template('admin/admin_form_evento.html', titulo_form="Novo Evento", form=form)
 
 
-@bp.route('/eventos/editar/<int:evento_id>', methods=['GET', 'POST'])
+@bp.route('/eventos/editar/<string:slug>', methods=['GET', 'POST'])
 @login_required
-def editar_evento(evento_id):
-    evento = Evento.query.get_or_404(evento_id)
+def editar_evento(slug):
+    evento = Evento.query.filter_by(slug=slug).first_or_404()
     # Passamos obj=evento para que o WTForms preencha o formulário com os dados do evento automaticamente
     form = EventoForm(obj=evento)
 
     if form.validate_on_submit():
         form.populate_obj(evento)  # Atualiza o objeto com os dados do form
+        evento.slug = slugify(evento.nome_evento)
         try:
             db.session.commit()
             flash('Evento atualizado com sucesso!', 'success')
@@ -231,7 +224,6 @@ def editar_evento(evento_id):
             flash(f'Erro ao atualizar evento: {e}', 'danger')
 
     return render_template('admin/admin_form_evento.html', titulo_form="Editar Evento", form=form)
-
 
 @bp.route('/eventos/<int:evento_id>/excluir', methods=['POST'])
 @admin_required

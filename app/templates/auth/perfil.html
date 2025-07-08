@@ -1,36 +1,26 @@
 {% extends "base.html" %}
-
 {% block title %}Meu Perfil{% endblock %}
-
 {% block content %}
-    <div class="profile-header">
-        <img src="{{ current_user.imagem_perfil or 'https://via.placeholder.com/150.png?text=Perfil' }}"
-             alt="Foto de Perfil" class="profile-avatar">
-
-        <h1 class="profile-name">{{ current_user.nome_completo or current_user.username }}</h1>
-        <p class="profile-username">@{{ current_user.username }}</p>
-
+    <div class="profile-header mb-4">
+        <img src="{{ current_user.imagem_perfil or '/static/images/default-avatar.png' }}"
+             class="profile-avatar rounded-circle" alt="Avatar">
+        <h1 class="h4">{{ current_user.nome_completo or current_user.username }}</h1>
+        <p class="small text-light">@{{ current_user.username }}</p>
         {% if current_user.bio %}
-            <p class="profile-bio">"{{ current_user.bio }}"</p>
+            <p class="font-italic text-light">{{ current_user.bio }}</p>
         {% endif %}
     </div>
-
-    <div class="card profile-info-card">
-        <div class="card-header">
-            <i class="fas fa-info-circle mr-2"></i>Minhas Informações
-        </div>
+    <div class="card profile-info-card mb-5">
+        <div class="card-header bg-light"><strong>Minhas Informações</strong></div>
         <ul class="list-group list-group-flush">
-            <li class="list-group-item">
-                <strong>Email:</strong>
-                <span>{{ current_user.email }}</span>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Email</span><span>{{ current_user.email }}</span>
             </li>
-            <li class="list-group-item">
-                <strong>CPF:</strong>
-                <span>{{ current_user.cpf or 'Não informado' }}</span>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>CPF</span><span>{{ current_user.cpf or 'Não informado' }}</span>
             </li>
-            <li class="list-group-item">
-                <strong>Telefone:</strong>
-                <span>{{ current_user.telefone or 'Não informado' }}</span>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Telefone</span><span>{{ current_user.telefone or 'Não informado' }}</span>
             </li>
         </ul>
         <div class="card-body text-center">

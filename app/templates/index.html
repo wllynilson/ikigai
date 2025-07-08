@@ -2,74 +2,170 @@
 {% block title %}Bem-vindo à Ikigai Combat{% endblock %}
 
 {% block content %}
-    <div class="container-fluid px-md-4 px-3">
+    <div class="container-fluid">
         <div class="hero-section">
             <div class="hero-content">
                 <h1 class="hero-title">Bem-vindo à Ikigai Combat</h1>
                 <p class="hero-subtitle">O seu propósito em forma de evento. Conectamos pessoas, paixões e
                     conhecimento.</p>
-                <a class="btn btn-hero" href="#eventos" role="button">Explorar Eventos</a>
+                <a class="btn btn-hero" href="#eventos" role="button" aria-label="Explorar eventos disponíveis">
+                    <i class="fas fa-calendar-alt"></i>
+                    Explorar Eventos
+                </a>
             </div>
         </div>
 
-        <div id="eventos" class="mt-5">
-            <div class="view-toggle">
-                <button class="toggle-btn active" data-view="compact"><i class="fas fa-th-large"></i> Compacta</button>
-                <button class="toggle-btn" data-view="full"><i class="fas fa-th-list"></i> Grelha</button>
+        <section id="eventos" class="mt-5" aria-label="Seção de eventos">
+            <div class="view-toggle" role="tablist" aria-label="Alternar visualização de eventos">
+               {# <button class="toggle-btn active" data-view="compact" role="tab" aria-selected="true"
+                        aria-controls="compact-view">
+                    <i class="fas fa-th-large" aria-hidden="true"></i>
+                    <span>Compacta</span>
+                </button>#}
+                <button class="toggle-btn" data-view="full" role="tab" aria-selected="false" aria-controls="full-view">
+                    <i class="fas fa-th-list" aria-hidden="true"></i>
+                </button>
             </div>
 
-            <div class="events-carousel-container">
-                <button class="carousel-controls carousel-prev"><i class="fas fa-chevron-left"></i></button>
-                <div class="events-carousel">
+            <!-- Visualização Compacta -->
+           {# <div class="events-carousel-container" id="compact-view" role="tabpanel" aria-labelledby="compact-tab">
+                <button class="carousel-controls carousel-prev" aria-label="Evento anterior"
+                        title="Ver evento anterior">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+
+                <div class="events-carousel" role="region" aria-label="Carrossel de eventos">
                     {% if eventos %}
                         {% for evento in eventos %}
-                            <div class="event-card">
-                                <img data-src="{{ evento.imagem_palestrante or url_for('static', filename='images/default-event.jpg') }}"
-                                     src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                                     class="event-image" alt="Imagem do evento {{ evento.nome_evento }}">
+                            <article class="event-card" tabindex="0" role="article"
+                                     aria-labelledby="event-title-{{ loop.index }}">
+                                <img data-src="{{ evento.imagem_palestrante or url_for('static', filename='images/tatame.jpg') }}"
+                                     class="event-image lazy"
+                                     alt="Imagem do evento {{ evento.nome_evento }}"
+                                     loading="lazy">
+
                                 <div class="event-body">
-                                    <h5 class="event-title">{{ evento.nome_evento }}</h5>
+                                    <h4 class="event-title"
+                                        id="event-title-{{ loop.index }}">{{ evento.nome_evento }}</h4>
+
                                     {% if evento.palestrante %}
-                                        <div class="event-speaker"><i
-                                                class="fas fa-user-tie"></i> {{ evento.palestrante }}</div>{% endif %}
+                                        <div class="event-speaker" aria-label="Palestrante">
+                                            <i class="fas fa-user-tie" aria-hidden="true"></i>
+                                            {{ evento.palestrante }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if evento.descricao %}
+                                        <p class="event-description">{{ evento.descricao|truncate(80) }}</p>
+                                    {% endif %}
+
+                                    <div class="event-footer-compact">
+                                        <span class="event-price-compact" aria-label="Preço do evento">
+                                            {% if evento.preco > 0 %}
+                                                R$ {{ ("%.2f"|format(evento.preco|float))|replace('.', ',') }}
+                                            {% else %}
+                                                Gratuito
+                                            {% endif %}
+                                        </span>
+                                        <a href="{{ url_for('public.detalhe_evento', slug=evento.slug) }}"
+                                           class="btn-details"
+                                           aria-label="Ver detalhes do evento {{ evento.nome_evento }}">
+                                            <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                            Detalhes
+                                        </a>
+                                    </div>
                                 </div>
-                            </div>
+                            </article>
                         {% endfor %}
+                    {% else %}
+                        <div class="no-events" role="alert">
+                            <i class="fas fa-calendar-times fa-3x mb-3" aria-hidden="true"></i>
+                            <h3>Nenhum evento programado</h3>
+                            <p>Fique atento às nossas redes sociais para novos eventos!</p>
+                        </div>
                     {% endif %}
                 </div>
-                <button class="carousel-controls carousel-next"><i class="fas fa-chevron-right"></i></button>
-            </div>
 
-            <div class="events-grid-full hidden">
+                <button class="carousel-controls carousel-next" aria-label="Próximo evento" title="Ver próximo evento">
+                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </button>
+            </div>#}
+
+            <!-- Visualização em Grade -->
+            <div class="events-grid-full hidden" id="full-view" role="tabpanel" aria-labelledby="full-tab">
                 {% if eventos %}
                     {% for evento in eventos %}
-                        <a href="{{ url_for('public.detalhe_evento', evento_id=evento.id) }}" class="card-link">
-                            <div class="event-card-full">
-                                <img data-src="{{ evento.imagem_palestrante or url_for('static', filename='images/default-event.jpg') }}"
+                        <article class="event-card-full">
+                            <a href="{{ url_for('public.detalhe_evento', slug=evento.slug) }}"
+                               class="card-link"
+                               aria-labelledby="full-event-title-{{ loop.index }}">
+
+                                <img data-src="{{ evento.imagem_palestrante or url_for('static', filename='images/tatame.jpg') }}"
                                      src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                                     class="event-image" alt="Imagem do evento {{ evento.nome_evento }}">
+                                     class="event-image lazy"
+                                     alt="Imagem do evento {{ evento.nome_evento }}"
+                                     loading="lazy">
+
                                 <div class="event-body">
-                                    <h5 class="event-title">{{ evento.nome_evento }}</h5>
-                                    <p class="event-description">{{ evento.descricao|truncate(100) }}</p>
+                                    <h3 class="event-title"
+                                        id="full-event-title-{{ loop.index }}">{{ evento.nome_evento }}</h3>
+
+                                    {% if evento.palestrante %}
+                                        <div class="event-speaker">
+                                            <i class="fas fa-user-tie" aria-hidden="true"></i>
+                                            {{ evento.palestrante }}
+                                        </div>
+                                    {% endif %}
+
+                                    <p class="event-description">{{ evento.descricao|truncate(120) }}</p>
+
+                                    {% if evento.data_evento %}
+                                        <div class="event-details">
+                                            <div class="event-detail-item">
+                                                <i class="fas fa-calendar" aria-hidden="true"></i>
+                                                <span>{{ evento.data_evento.strftime('%d/%m/%Y') }}</span>
+                                            </div>
+                                            {% if evento.horario %}
+                                                <div class="event-detail-item">
+                                                    <i class="fas fa-clock" aria-hidden="true"></i>
+                                                    <span>{{ evento.horario }}</span>
+                                                </div>
+                                            {% endif %}
+                                            {% if evento.local %}
+                                                <div class="event-detail-item">
+                                                    <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                                    <span>{{ evento.local }}</span>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
                                 </div>
-                                <div class="event-footer-compact">
-                                    <span class="event-price-compact">{% if evento.preco > 0 %}R$
-                                        {{ ("%.2f"|format(evento.preco|float))|replace('.', ',') }}{% else %}
-                                        Gratuito{% endif %}</span>
+
+                                <div class="event-footer">
+                                    <span class="event-price-compact">
+                                        {% if evento.preco > 0 %}
+                                            R$ {{ ("%.2f"|format(evento.preco|float))|replace('.', ',') }}
+                                        {% else %}
+                                            Gratuito
+                                        {% endif %}
+                                    </span>
                                     <span class="btn-subscribe-compact">Ver Detalhes</span>
                                 </div>
-                            </div>
-                        </a>
+                            </a>
+                        </article>
                     {% endfor %}
                 {% else %}
-                    <div class="no-events">
-                        <p>Nenhum evento programado no momento.</p>
+                    <div class="no-events" role="alert">
+                        <i class="fas fa-calendar-times fa-3x mb-3" aria-hidden="true"></i>
+                        <h3>Nenhum evento programado</h3>
+                        <p>Em breve teremos novidades incríveis para você!</p>
                     </div>
                 {% endif %}
             </div>
-        </div>
-
-        <div id="sobre" class="about-section">
+        </section>
+        <br/>
+        <br/>
+        <section id="sobre" class="about-section" aria-label="Sobre a Ikigai Combat">
             <h2 class="about-title">Sobre a Ikigai</h2>
             <p class="about-text">
                 Cada evento da Ikigai é pensado para inspirar. Valorizamos os detalhes, a experiência humana e o impacto
@@ -79,6 +175,133 @@
                 Do planejamento à execução, tudo é feito com o mesmo princípio que nos deu nome: criar algo que tenha
                 propósito, valor e faça sentido para quem participa.
             </p>
-        </div>
+        </section>
     </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Lazy loading para imagens
+            const lazyImages = document.querySelectorAll('img.lazy');
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                        observer.unobserve(img);
+                    }
+                });
+            });
+
+            lazyImages.forEach(img => imageObserver.observe(img));
+
+            // Toggle de visualização aprimorado
+            const toggleBtns = document.querySelectorAll('.toggle-btn');
+            const compactView = document.getElementById('compact-view');
+            const fullView = document.getElementById('full-view');
+
+            toggleBtns.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const view = this.dataset.view;
+
+                    // Atualizar estados dos botões
+                    toggleBtns.forEach(b => {
+                        b.classList.remove('active');
+                        b.setAttribute('aria-selected', 'false');
+                    });
+
+                    this.classList.add('active');
+                    this.setAttribute('aria-selected', 'true');
+
+                    // Mostrar/esconder visualizações
+                    if (view === 'compact') {
+                        compactView.classList.remove('hidden');
+                        fullView.classList.add('hidden');
+                    } else {
+                        compactView.classList.add('hidden');
+                        fullView.classList.remove('hidden');
+                    }
+                });
+            });
+
+            // Navegação do carrossel aprimorada
+            const carousel = document.querySelector('.events-carousel');
+            const prevBtn = document.querySelector('.carousel-prev');
+            const nextBtn = document.querySelector('.carousel-next');
+
+            if (carousel && prevBtn && nextBtn) {
+                const cardWidth = carousel.querySelector('.event-card')?.offsetWidth || 220;
+                const gap = 16; // 1rem
+                const scrollAmount = cardWidth + gap;
+
+                prevBtn.addEventListener('click', () => {
+                    carousel.scrollBy({left: -scrollAmount, behavior: 'smooth'});
+                });
+
+                nextBtn.addEventListener('click', () => {
+                    carousel.scrollBy({left: scrollAmount, behavior: 'smooth'});
+                });
+
+                // Suporte a touch para mobile
+                let startX = 0;
+                let scrollLeft = 0;
+                let isDown = false;
+
+                carousel.addEventListener('mousedown', (e) => {
+                    isDown = true;
+                    startX = e.pageX - carousel.offsetLeft;
+                    scrollLeft = carousel.scrollLeft;
+                });
+
+                carousel.addEventListener('mouseleave', () => {
+                    isDown = false;
+                });
+
+                carousel.addEventListener('mouseup', () => {
+                    isDown = false;
+                });
+
+                carousel.addEventListener('mousemove', (e) => {
+                    if (!isDown) return;
+                    e.preventDefault();
+                    const x = e.pageX - carousel.offsetLeft;
+                    const walk = (x - startX) * 2;
+                    carousel.scrollLeft = scrollLeft - walk;
+                });
+
+                // Touch events para mobile
+                carousel.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].pageX - carousel.offsetLeft;
+                    scrollLeft = carousel.scrollLeft;
+                });
+
+                carousel.addEventListener('touchmove', (e) => {
+                    const x = e.touches[0].pageX - carousel.offsetLeft;
+                    const walk = (x - startX) * 2;
+                    carousel.scrollLeft = scrollLeft - walk;
+                });
+            }
+
+            // Animações on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('fade-in');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.event-card, .about-section').forEach(el => {
+                observer.observe(el);
+            });
+        });
+    </script>
 {% endblock %}
