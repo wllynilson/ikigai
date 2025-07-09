@@ -77,3 +77,13 @@ class EditarParticipanteForm(FlaskForm):
     graduacao = StringField('Graduação', validators=[DataRequired()])
     equipe_id = SelectField('Equipe', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Salvar Alterações')
+
+class EquipeForm(FlaskForm):
+    """Formulário para criar e editar Equipes."""
+    nome_equipe = StringField('Nome da Equipe', validators=[DataRequired(), Length(max=100)])
+    professor_responsavel = StringField('Professor Responsável', validators=[DataRequired(), Length(max=100)])
+    submit = SubmitField('Salvar Equipe')
+
+class EmptyForm(FlaskForm):
+    """Um formulário vazio usado para ações POST protegidas por CSRF, como exclusão."""
+    submit = SubmitField('Submit')

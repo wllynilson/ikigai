@@ -124,7 +124,7 @@
 
                 event.preventDefault();
 
-                const matchDiv = target.closest('.match');
+                const matchDiv = target.closest('.match-card');
                 currentLutaId = matchDiv.dataset.lutaId;
 
                 const c1_id = matchDiv.dataset.c1Id;
@@ -231,7 +231,7 @@
                 event.preventDefault();
 
                 // 2. Pega os dados da luta a partir dos atributos data-*
-                const matchDiv = target.closest('.match');
+                const matchDiv = target.closest('.match-card');
                 currentLutaId = matchDiv.dataset.lutaId;
 
                 const c1_id = matchDiv.dataset.c1Id;

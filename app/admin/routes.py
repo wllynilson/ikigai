@@ -13,7 +13,7 @@ from app.decorators import admin_required
 from app.services import gerar_chave_eliminatoria_simples
 from . import bp
 from .forms import CategoriaForm, EditarParticipanteForm
-from .forms import EventoForm
+from .forms import EventoForm, EquipeForm, EmptyForm
 from .. import db
 from ..models import Categoria, Participante, Pagamento
 from ..models import Evento, Equipe, Inscricao, User, Luta
@@ -64,105 +64,92 @@ def dashboard():
     return render_template('admin/dashboard.html', titulo='Dashboard', stats=stats)
 
 
-# --- Gerenciamento de Equipes (já feito, agora dentro do blueprint) ---
 @bp.route('/equipes')
 @admin_required
 def gerenciar_equipes():
     equipes = Equipe.query.order_by(Equipe.nome_equipe).all()
-    return render_template('admin/admin_gerenciar_equipes.html', equipes=equipes)
+    # Criamos uma instância do formulário vazio para passar ao template
+    form = EmptyForm()
+    return render_template('admin/admin_gerenciar_equipes.html', equipes=equipes, form=form)
 
 
 @bp.route('/equipes/nova', methods=['GET', 'POST'])
 @admin_required
 def nova_equipe():
-    if request.method == 'POST':
-        nome_equipe = request.form['nome_equipe']
-        professor_responsavel = request.form['professor_responsavel']
-
+    form = EquipeForm()
+    if form.validate_on_submit():
+        nome_equipe = form.nome_equipe.data
         equipe_existente = Equipe.query.filter_by(nome_equipe=nome_equipe).first()
         if equipe_existente:
             flash('Uma equipe com este nome já existe.', 'warning')
         else:
-            nova_equipe = Equipe(nome_equipe=nome_equipe, professor_responsavel=professor_responsavel)
-            try:
-                db.session.add(nova_equipe)
-                db.session.commit()
-                flash('Equipe cadastrada com sucesso!', 'success')
-                return redirect(url_for('admin.gerenciar_equipes'))
-            except Exception as e:
-                db.session.rollback()
-                flash(f'Erro ao cadastrar equipe: {str(e)}', 'danger')
-        # Se houve erro ou equipe existente, renderiza o form novamente
-        # Passando os dados que o usuário tentou submeter para repreencher (opcional)
-        return render_template('admin/admin_form_equipe.html',
-                               titulo_form="Nova Equipe",
-                               equipe_dados={'nome_equipe': nome_equipe,
-                                             'professor_responsavel': professor_responsavel},
-                               action_url=url_for('admin.nova_equipe'))
+            nova_equipe_obj = Equipe(
+                nome_equipe=nome_equipe,
+                professor_responsavel=form.professor_responsavel.data
+            )
+            db.session.add(nova_equipe_obj)
+            db.session.commit()
+            flash('Equipe cadastrada com sucesso!', 'success')
+            return redirect(url_for('admin.gerenciar_equipes'))
 
-    # Se GET, apenas mostra o formulário vazio
     return render_template('admin/admin_form_equipe.html',
                            titulo_form="Nova Equipe",
-                           action_url=url_for('admin.nova_equipe'))
+                           form=form)
 
 
 @bp.route('/equipes/<int:equipe_id>/editar', methods=['GET', 'POST'])
 @admin_required
 def editar_equipe(equipe_id):
-    equipe_para_editar = Equipe.query.get_or_404(equipe_id)
+    equipe = Equipe.query.get_or_404(equipe_id)
+    form = EquipeForm(obj=equipe)
 
-    if request.method == 'POST':
-        novo_nome_equipe = request.form['nome_equipe']
-        novo_professor_responsavel = request.form['professor_responsavel']
-
+    if form.validate_on_submit():
         # Verifica se o novo nome já existe em OUTRA equipe
-        equipe_existente_com_mesmo_nome = Equipe.query.filter(Equipe.nome_equipe == novo_nome_equipe,
-                                                              Equipe.id != equipe_id).first()
-        if equipe_existente_com_mesmo_nome:
-            flash('Já existe outra equipe cadastrada com este nome.', 'warning')
-            # Re-renderiza o formulário com os dados que o usuário tentou submeter
-            return render_template('admin/admin_form_equipe.html',
-                                   titulo_form=f"Editar Equipe: {equipe_para_editar.nome_equipe}",
-                                   action_url=url_for('admin.editar_equipe', equipe_id=equipe_id),
-                                   equipe_dados={'nome_equipe': novo_nome_equipe,
-                                                 'professor_responsavel': novo_professor_responsavel})  # Passa os dados tentados
-        else:
-            equipe_para_editar.nome_equipe = novo_nome_equipe
-            equipe_para_editar.professor_responsavel = novo_professor_responsavel
-            try:
-                db.session.commit()
-                flash('Equipe atualizada com sucesso!', 'success')
-                return redirect(url_for('admin.gerenciar_equipes'))
-            except Exception as e:
-                db.session.rollback()
-                flash(f'Erro ao atualizar equipe: {str(e)}', 'danger')
+        equipe_existente = Equipe.query.filter(
+            Equipe.nome_equipe == form.nome_equipe.data,
+            Equipe.id != equipe_id
+        ).first()
 
-    # Se GET, mostra o formulário preenchido com os dados da equipe
+        if equipe_existente:
+            flash('Já existe outra equipe cadastrada com este nome.', 'warning')
+        else:
+            form.populate_obj(equipe)  # Atualiza o objeto equipe com os dados do form
+            db.session.commit()
+            flash('Equipe atualizada com sucesso!', 'success')
+            return redirect(url_for('admin.gerenciar_equipes'))
+
     return render_template('admin/admin_form_equipe.html',
-                           titulo_form=f"Editar Equipe: {equipe_para_editar.nome_equipe}",
-                           action_url=url_for('admin.editar_equipe', equipe_id=equipe_id),
-                           equipe_dados=equipe_para_editar)  # Passa o objeto equipe para preencher o form
+                           titulo_form=f"Editar Equipe: {equipe.nome_equipe}",
+                           form=form)
 
 
 @bp.route('/equipes/<int:equipe_id>/excluir', methods=['POST'])
 @admin_required
 def excluir_equipe(equipe_id):
-    equipe_para_excluir = Equipe.query.get_or_404(equipe_id)
+    # Instancia o formulário vazio para validação
+    form = EmptyForm()
 
-    # Verificar se a equipe tem inscrições associadas
-    if equipe_para_excluir.inscricoes:  # Se a lista de inscrições não estiver vazia
-        flash(
-            f'Não é possível excluir a equipe "{equipe_para_excluir.nome_equipe}", pois ela possui participantes inscritos associados a ela.',
-            'danger')
-        return redirect(url_for('admin.gerenciar_equipes'))
+    # A lógica de exclusão agora só é executada se o formulário (e o token CSRF) for válido
+    if form.validate_on_submit():
+        equipe_para_excluir = Equipe.query.get_or_404(equipe_id)
 
-    try:
-        db.session.delete(equipe_para_excluir)
-        db.session.commit()
-        flash(f'Equipe "{equipe_para_excluir.nome_equipe}" excluída com sucesso!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Erro ao excluir equipe: {str(e)}', 'danger')
+        # A sua verificação de segurança (muito importante!)
+        if equipe_para_excluir.participantes.count() > 0:
+            flash(
+                f'Não é possível excluir a equipe "{equipe_para_excluir.nome_equipe}", pois ela possui participantes associados.',
+                'danger')
+            return redirect(url_for('admin.gerenciar_equipes'))
+
+        try:
+            db.session.delete(equipe_para_excluir)
+            db.session.commit()
+            flash(f'Equipe "{equipe_para_excluir.nome_equipe}" excluída com sucesso!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao excluir equipe: {str(e)}', 'danger')
+    else:
+        # Se a validação do formulário falhar, o que geralmente significa um erro de CSRF
+        flash('Erro de segurança ao tentar excluir a equipe.', 'danger')
 
     return redirect(url_for('admin.gerenciar_equipes'))
 
@@ -673,7 +660,7 @@ def declarar_vencedor(luta_id):
     data = request.get_json()
     vencedor_id = data.get('vencedor_id')
 
-    if not vencedor_id:
+    if not vencedor_id or 'vencedor_id' not in data:
         return jsonify({'status': 'error', 'message': 'ID do vencedor não fornecido.'}), 400
 
     luta_atual = Luta.query.get_or_404(luta_id)
