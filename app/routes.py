@@ -14,10 +14,13 @@ public_bp = Blueprint('public', __name__)
 
 @public_bp.route('/')
 def index():
-    # Cole aqui a lógica da função 'index' que tínhamos antes
-    eventos = Evento.query.filter(Evento.data_hora_evento >= datetime.utcnow()).order_by(Evento.data_hora_evento).all()
-    return render_template('index.html', eventos=eventos)
+    # Busca TODOS os eventos, ordenando pelos mais recentes primeiro
+    eventos = Evento.query.order_by(Evento.data_hora_evento.desc()).all()
 
+    # Passa os eventos e a data/hora atual para o template
+    return render_template('index.html',
+                           eventos=eventos,
+                           now=datetime.now())
 
 @public_bp.route('/inscrever/<string:slug>', methods=['GET', 'POST'])
 @login_required
@@ -78,7 +81,7 @@ def inscrever_evento(slug):
 def detalhe_evento(slug):
     # Agora busca pelo campo 'slug'
     evento = Evento.query.filter_by(slug=slug).first_or_404()
-    return render_template('detalhe_evento.html', titulo=evento.nome_evento, evento=evento)
+    return render_template('detalhe_evento.html', titulo=evento.nome_evento, evento=evento, now=datetime.now())
 
 
 @public_bp.route('/evento/<string:slug>/categoria/<int:categoria_id>/chave')

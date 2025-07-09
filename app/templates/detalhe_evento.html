@@ -77,9 +77,13 @@
                     </div>
                 </div>
                 <div class="subscribe-section">
-                    <a href="{{ url_for('public.inscrever_evento', slug=evento.slug) }}" class="btn-subscribe">
-                        <i class="fas fa-ticket-alt mr-2"></i> Inscrever-se Agora
-                    </a>
+                    {% if evento.data_hora_evento < now %}
+                        <span class="btn-subscribe disabled" aria-disabled="true">Inscrições Encerradas</span>
+                    {% else %}
+                        <a href="{{ url_for('public.inscrever_evento', slug=evento.slug) }}" class="btn-subscribe">
+                            <i class="fas fa-ticket-alt mr-2"></i> Inscrever-se Agora
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

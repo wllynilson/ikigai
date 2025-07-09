@@ -95,10 +95,17 @@
             <div class="events-grid-full hidden" id="full-view" role="tabpanel" aria-labelledby="full-tab">
                 {% if eventos %}
                     {% for evento in eventos %}
-                        <article class="event-card-full">
+                        <article class="event-card-full {% if evento.data_hora_evento < now %}event-past{% endif %}">
+
                             <a href="{{ url_for('public.detalhe_evento', slug=evento.slug) }}"
                                class="card-link"
                                aria-labelledby="full-event-title-{{ loop.index }}">
+
+                                {% if evento.data_hora_evento < now %}
+                                    <div class="event-past-overlay">
+                                        <span>Realizado</span>
+                                    </div>
+                                {% endif %}
 
                                 <img data-src="{{ evento.imagem_palestrante or url_for('static', filename='images/tatame.jpg') }}"
                                      src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
@@ -117,7 +124,7 @@
                                         </div>
                                     {% endif %}
 
-                                    <p class="event-description">{{ evento.descricao|truncate(120) }}</p>
+                                    <p class="event-description">{{ evento.descricao|truncate(50) }}</p>
 
                                     {% if evento.data_evento %}
                                         <div class="event-details">
@@ -149,7 +156,10 @@
                                             Gratuito
                                         {% endif %}
                                     </span>
-                                    <span class="btn-subscribe-compact">Ver Detalhes</span>
+                                    {% if evento.data_hora_evento > now %}
+                                        <a href="{{ url_for('public.inscrever_evento', slug=evento.slug) }}"
+                                           class="btn-subscribe-compact">Inscrever-se</a>
+                                    {% endif %}
                                 </div>
                             </a>
                         </article>
