@@ -4,108 +4,109 @@
 {% block page_title %}{{ titulo }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3">
-    <!-- Header com informações do evento -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 text-primary">
-                    <i class="fas fa-calendar-alt me-2"></i>{{ categoria.evento.nome_evento }}
-                </h5>
-                <a href="{{ url_for('admin.categorias_evento', evento_id=categoria.evento_id) }}"
-                   class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-arrow-left me-1"></i> Voltar para Categorias
-                </a>
+    <div class="container-fluid py-3">
+        <!-- Header com informações do evento -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-primary">
+                        <i class="fas fa-calendar-alt me-2"></i>{{ categoria.evento.nome_evento }}
+                    </h5>
+                    <a href="{{ url_for('admin.categorias_evento', evento_id=categoria.evento_id) }}"
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-arrow-left me-1"></i> Voltar para Categorias
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
 
-    {% if mostrar_botao_terceiro %}
-        <div class="alert alert-info shadow-sm rounded-3 d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <i class="fas fa-info-circle me-2"></i>
-                <span>As semi-finais foram concluídas. Gere a disputa pelo 3º lugar.</span>
+        {% if mostrar_botao_terceiro %}
+            <div class="alert alert-info shadow-sm rounded-3 d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span>As semi-finais foram concluídas. Gere a disputa pelo 3º lugar.</span>
+                </div>
+                <form method="POST"
+                      action="{{ url_for('admin.gerar_disputa_terceiro_lugar', categoria_id=categoria.id) }}">
+                    {{ form.hidden_tag() }}
+                    <button type="submit" class="btn btn-primary">Gerar Disputa de 3º Lugar</button>
+                </form>
             </div>
-            <form method="POST" action="{{ url_for('admin.gerar_disputa_terceiro_lugar', categoria_id=categoria.id) }}">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-medal me-1"></i> Gerar Disputa de 3º Lugar
-                </button>
-            </form>
-        </div>
-    {% endif %}
+        {% endif %}
 
-    <!-- Chaveamento -->
-    <div class="bracket-container">
-        <div class="row tournament-bracket">
-            {% for round_num, lutas_no_round in rounds.items() %}
-                <div class="col-lg bracket-round">
-                    <h4 class="round-title mb-3 text-center">
-                        <span class="badge bg-primary rounded-pill">Round {{ round_num }}</span>
-                    </h4>
-                    <div class="matches-column">
-                        {% for luta in lutas_no_round %}
-                            <div class="match-card shadow-sm mb-4" id="luta-{{ luta.id }}"
-                                 data-luta-id="{{ luta.id }}"
-                                 data-c1-id="{{ luta.competidor1.id if luta.competidor1 else '' }}"
-                                 data-c1-nome="{{ luta.competidor1.nome_completo if luta.competidor1 else 'A definir' }}"
-                                 data-c2-id="{{ luta.competidor2.id if luta.competidor2 else '' }}"
-                                 data-c2-nome="{{ luta.competidor2.nome_completo if luta.competidor2 else 'A definir' }}">
+        <!-- Chaveamento -->
+        <div class="bracket-container">
+            <div class="row tournament-bracket">
+                {% for round_num, lutas_no_round in rounds.items() %}
+                    <div class="col-lg bracket-round">
+                        <h4 class="round-title mb-3 text-center">
+                            <span class="badge bg-primary rounded-pill">Round {{ round_num }}</span>
+                        </h4>
+                        <div class="matches-column">
+                            {% for luta in lutas_no_round %}
+                                <div class="match-card shadow-sm mb-4" id="luta-{{ luta.id }}"
+                                     data-luta-id="{{ luta.id }}"
+                                     data-c1-id="{{ luta.competidor1.id if luta.competidor1 else '' }}"
+                                     data-c1-nome="{{ luta.competidor1.nome_completo if luta.competidor1 else 'A definir' }}"
+                                     data-c2-id="{{ luta.competidor2.id if luta.competidor2 else '' }}"
+                                     data-c2-nome="{{ luta.competidor2.nome_completo if luta.competidor2 else 'A definir' }}">
 
-                                <div class="match-content p-2">
-                                    <div id="slot-luta-{{ luta.id }}-c1"
-                                         class="participant d-flex justify-content-between align-items-center p-2 {% if luta.vencedor_id == luta.competidor1_id %}winner{% endif %}">
-                                        <span class="competitor-name">{{ luta.competidor1.nome_completo if luta.competidor1 else 'A definir' }}</span>
-                                        {% if luta.vencedor_id == luta.competidor1_id %}
-                                            <i class="fas fa-trophy text-warning"></i>
-                                        {% endif %}
+                                    <div class="match-content p-2">
+                                        <div id="slot-luta-{{ luta.id }}-c1"
+                                             class="participant d-flex justify-content-between align-items-center p-2 {% if luta.vencedor_id == luta.competidor1_id %}winner{% endif %}">
+                                            <span class="competitor-name">{{ luta.competidor1.nome_completo if luta.competidor1 else 'A definir' }}</span>
+                                            {% if luta.vencedor_id == luta.competidor1_id %}
+                                                <i class="fas fa-trophy text-warning"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="vs-divider text-center">VS</div>
+                                        <div id="slot-luta-{{ luta.id }}-c2"
+                                             class="participant d-flex justify-content-between align-items-center p-2 {% if luta.vencedor_id == luta.competidor2_id %}winner{% endif %}">
+                                            <span class="competitor-name">{{ luta.competidor2.nome_completo if luta.competidor2 else 'A definir' }}</span>
+                                            {% if luta.vencedor_id == luta.competidor2_id %}
+                                                <i class="fas fa-trophy text-warning"></i>
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    <div class="vs-divider text-center">VS</div>
-                                    <div id="slot-luta-{{ luta.id }}-c2"
-                                         class="participant d-flex justify-content-between align-items-center p-2 {% if luta.vencedor_id == luta.competidor2_id %}winner{% endif %}">
-                                        <span class="competitor-name">{{ luta.competidor2.nome_completo if luta.competidor2 else 'A definir' }}</span>
-                                        {% if luta.vencedor_id == luta.competidor2_id %}
-                                            <i class="fas fa-trophy text-warning"></i>
+
+                                    <div class="match-actions p-2 text-center">
+                                        {% if luta.competidor1 and luta.competidor2 and not luta.vencedor_id %}
+                                            <a href="#" class="btn btn-sm btn-success set-winner-btn"
+                                               title="Definir Vencedor">
+                                                <i class="fas fa-trophy me-1"></i> Definir Vencedor
+                                            </a>
                                         {% endif %}
                                     </div>
                                 </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
 
-                                <div class="match-actions p-2 text-center">
-                                    {% if luta.competidor1 and luta.competidor2 and not luta.vencedor_id %}
-                                        <a href="#" class="btn btn-sm btn-success set-winner-btn"
-                                           title="Definir Vencedor">
-                                            <i class="fas fa-trophy me-1"></i> Definir Vencedor
-                                        </a>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% endfor %}
+        <!-- Modal para declarar vencedor -->
+        <div class="modal fade" id="winnerModal" tabindex="-1" aria-labelledby="winnerModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="winnerModalLabel">
+                            <i class="fas fa-trophy me-2"></i>Declarar Vencedor
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-center mb-4">Selecione o vencedor da luta:</p>
+                        <div id="modal-competitors" class="d-grid gap-3"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                     </div>
                 </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Modal para declarar vencedor -->
-    <div class="modal fade" id="winnerModal" tabindex="-1" aria-labelledby="winnerModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="winnerModalLabel">
-                        <i class="fas fa-trophy me-2"></i>Declarar Vencedor
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-center mb-4">Selecione o vencedor da luta:</p>
-                    <div id="modal-competitors" class="d-grid gap-3"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                </div>
             </div>
         </div>
     </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
@@ -155,9 +156,9 @@
 
                 console.log('Verificando vencedor:', vencedorId, 'contra competidores:', c1Id, c2Id);
                 console.log('Tipos de dados:',
-                           'vencedorId:', typeof vencedorId,
-                           'c1Id:', typeof c1Id,
-                           'c2Id:', typeof c2Id);
+                    'vencedorId:', typeof vencedorId,
+                    'c1Id:', typeof c1Id,
+                    'c2Id:', typeof c2Id);
 
                 if (isNaN(vencedorId) || (vencedorId !== c1Id && vencedorId !== c2Id)) {
                     alert('Erro: O vencedor selecionado não é um dos competidores desta luta.');
@@ -170,7 +171,11 @@
                 // 5. Envia o pedido AJAX para o backend
                 fetch(url, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Adiciona o token CSRF lido da meta tag do admin_base.html
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
                     body: JSON.stringify({vencedor_id: Number(vencedorId)})
                 })
 
@@ -210,91 +215,6 @@
                                 }
                             }
 
-                        } else {
-                            alert('Erro: ' + data.message);
-                        }
-                    })
-                    .catch(err => console.error('Erro no fetch:', err));
-            });
-        });
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const bracketContainer = document.querySelector('.bracket-container');
-            const winnerModal = $('#winnerModal'); // Usando jQuery para a modal do Bootstrap
-            const modalCompetitorsList = document.getElementById('modal-competitors-list');
-            let currentLutaId = null;
-
-            // 1. Ouve os cliques nos botões de troféu em toda a área da chave
-            bracketContainer.addEventListener('click', function (event) {
-                const target = event.target.closest('.set-winner-btn');
-                if (!target) return; // Se não clicou num botão de troféu, não faz nada
-                event.preventDefault();
-
-                // 2. Pega os dados da luta a partir dos atributos data-*
-                const matchDiv = target.closest('.match-card');
-                currentLutaId = matchDiv.dataset.lutaId;
-
-                const c1_id = matchDiv.dataset.c1Id;
-                const c1_nome = matchDiv.dataset.c1Nome;
-                const c2_id = matchDiv.dataset.c2Id;
-                const c2_nome = matchDiv.dataset.c2Nome;
-
-                // 3. Preenche a modal com os botões para cada competidor
-                modalCompetitorsList.innerHTML = `
-            <button class="btn btn-primary btn-block text-left mb-2 declare-winner-btn" data-vencedor-id="${c1_id}">
-                <i class="fas fa-trophy mr-2"></i> ${c1_nome}
-            </button>
-            <button class="btn btn-primary btn-block text-left" data-vencedor-id="${c2_id}">
-                <i class="fas fa-trophy mr-2"></i> ${c2_nome}
-            </button>
-        `;
-
-                // 4. Abre a modal
-                winnerModal.modal('show');
-            });
-
-            // 5. Ouve os cliques DENTRO da modal para declarar o vencedor
-            modalCompetitorsList.addEventListener('click', function (event) {
-                const target = event.target.closest('.declare-winner-btn');
-                if (!target) return;
-
-                const vencedorId = target.dataset.vencedorId;
-                const url = `/admin/luta/${currentLutaId}/set-vencedor`; // Monta a URL da nossa API
-
-                // 6. Envia o pedido AJAX para o backend
-                fetch(url, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({vencedor_id: vencedorId})
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            // 7. Se o backend confirmar o sucesso, atualiza a interface
-                            winnerModal.modal('hide');
-
-                            const lutaAtualDiv = document.getElementById(`luta-${currentLutaId}`);
-                            lutaAtualDiv.querySelector('.set-winner-btn')?.remove(); // Remove o botão de troféu
-
-                            // Marca o vencedor na luta atual
-                            const slotVencedor = (lutaAtualDiv.dataset.c1Id == vencedorId)
-                                ? lutaAtualDiv.querySelector('.participant:first-child')
-                                : lutaAtualDiv.querySelector('.participant:last-child');
-                            slotVencedor.classList.add('winner');
-
-                            // Avança o vencedor para a próxima luta, se houver
-                            if (data.proxima_luta_id) {
-                                const proximaLutaDiv = document.getElementById(`luta-${data.proxima_luta_id}`);
-                                if (proximaLutaDiv) {
-                                    const slot1_proxima_luta = proximaLutaDiv.querySelector('.participant:first-child span');
-
-                                    if (slot1_proxima_luta.textContent === 'A definir') {
-                                        slot1_proxima_luta.textContent = data.vencedor_nome;
-                                    } else {
-                                        proximaLutaDiv.querySelector('.participant:last-child span').textContent = data.vencedor_nome;
-                                    }
-                                }
-                            }
                         } else {
                             alert('Erro: ' + data.message);
                         }

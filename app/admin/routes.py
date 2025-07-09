@@ -645,13 +645,14 @@ def visualizar_chave(categoria_id):
         # 2. Só deve existir UMA luta na ronda final (a própria final, antes da disputa de 3º ser criada).
         if len(semi_finais) == 2 and all(l.vencedor_id for l in semi_finais) and len(lutas_na_ronda_final) == 1:
             mostrar_botao_terceiro = True
-    # --- FIM DA LÓGICA CORRIGIDA ---
 
+    form = EmptyForm()
     return render_template('admin/admin_visualizar_chave.html',
                            titulo=f"Chave: {categoria.nome}",
                            categoria=categoria,
                            rounds=rounds,
-                           mostrar_botao_terceiro=mostrar_botao_terceiro)  # Passa a variável corrigida
+                           mostrar_botao_terceiro=mostrar_botao_terceiro,
+                           form=form)  # Passa a variável corrigida
 
 @bp.route('/luta/<int:luta_id>/set-vencedor', methods=['POST'])
 @admin_required
@@ -750,7 +751,6 @@ def gerar_disputa_terceiro_lugar(categoria_id):
         round=max_round,  # Coloca a disputa no mesmo nível da final
         ordem_na_chave=ordem_final + 1,  # Garante que apareça depois da final
         categoria_id=categoria_id,
-        evento_id=categoria.evento_id,
         competidor1_id=perdedores[0].id,
         competidor2_id=perdedores[1].id
     )
@@ -760,6 +760,7 @@ def gerar_disputa_terceiro_lugar(categoria_id):
 
     flash('Disputa de 3º lugar gerada com sucesso!', 'success')
     return redirect(url_for('admin.visualizar_chave', categoria_id=categoria_id))
+
 
 
 @bp.route('/ferramentas/atribuir-categorias', methods=['GET', 'POST'])
