@@ -63,6 +63,9 @@ def create_app(config_class=Config):
         from .auth import routes as auth_routes
         app.register_blueprint(auth_routes.auth_bp)
 
+        from app.errors import bp as errors_bp
+        app.register_blueprint(errors_bp)
+
         # 6. Registar Comandos CLI Personalizados
         @app.cli.command("init-db")
         def init_db_command():

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Página Não Encontrada{% endblock %}
+
+{% block content %}
+<div class="text-center" style="padding: 80px 0;">
+    <h1 style="font-size: 5rem; font-weight: 700; color: var(--primary-red);">404</h1>
+    <p class="lead text-muted">Página Não Encontrada</p>
+    <hr class="my-4">
+    <p>O recurso que você procurou não foi encontrado no nosso servidor.</p>
+    <a href="{{ url_for('public.index') }}" class="btn btn-primary btn-lg mt-3">
+        <i class="fas fa-home"></i> Voltar para a Página Inicial
+    </a>
+</div>
+{% endblock %}
