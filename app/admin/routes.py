@@ -397,22 +397,34 @@ def editar_inscricao(inscricao_id):
 @bp.route('/usuarios')
 @admin_required
 def gerenciar_usuarios():
-    """Lista todos os utilizadores para gerenciamento, agora com paginação."""
-
-    # 1. Pega o número da página a partir da URL (ex: /admin/usuarios?page=2)
-    #    O '1' é o valor padrão, e 'type=int' garante que é um número.
+    """
+    Lista todos os utilizadores para gerenciamento, agora com paginação e filtro de busca.
+    Permite pesquisar por nome de usuário ou email.
+    """
     page = request.args.get('page', 1, type=int)
+    termo_pesquisa = request.args.get('q', '').strip()
 
-    # 2. Usa .paginate() em vez de .all() para buscar os utilizadores
-    #    'per_page=15': define quantos utilizadores queremos mostrar por página.
-    usuarios_paginados = User.query.order_by(User.username).paginate(
+    query = User.query
+
+    if termo_pesquisa:
+        query = query.filter(
+            or_(
+                User.username.ilike(f'%{termo_pesquisa}%'),
+                User.email.ilike(f'%{termo_pesquisa}%'),
+                User.nome_completo.ilike(f'%{termo_pesquisa}%')
+            )
+        )
+
+    usuarios_paginados = query.order_by(User.username).paginate(
         page=page, per_page=15, error_out=False
     )
 
-    return render_template('admin/admin_gerenciar_usuarios.html',
-                               titulo="Administração de Usuários",
-                               usuarios_paginados=usuarios_paginados)
-
+    return render_template(
+        'admin/admin_gerenciar_usuarios.html',
+        titulo="Administração de Usuários",
+        usuarios_paginados=usuarios_paginados,
+        termo_pesquisa=termo_pesquisa
+    )
 
 @bp.route('/usuario/<int:user_id>/resetar-senha', methods=['POST'])
 @admin_required
