@@ -1,13 +1,16 @@
 from collections import defaultdict
 from datetime import datetime
 
+import stripe
 from flask import Blueprint
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, flash
+from flask import request
+from flask import url_for  # Certifique-se de que request está importado
 from flask_login import login_required, current_user
 
 from app import db
-from app.models import Equipe, Inscricao, User
 from app.models import Evento, Categoria, Luta  # Certifique-se que Categoria e Luta estão importados
+from app.models import Inscricao, User
 from app.public.forms import InscricaoEventoForm  # Importa o novo formulário
 
 public_bp = Blueprint('public', __name__)
@@ -64,12 +67,54 @@ def inscrever_evento(slug):
         db.session.add(nova_inscricao)
         db.session.commit()
 
-        if evento.preco > 0 and evento.pix_copia_e_cola:
-            flash(evento.pix_copia_e_cola, 'show_pix_modal')
+        if evento.preco > 0:
+            try:
+                # Cria a sessão de checkout no Stripe
+                checkout_session = stripe.checkout.Session.create(
+                    payment_method_types=['card'],
+                    line_items=[{
+                        'price_data': {
+                            'currency': 'brl',  # Moeda: Real Brasileiro
+                            'product_data': {
+                                'name': f"Inscrição: {evento.nome_evento}",
+                                'description': f"Categoria: {nova_inscricao.categoria.nome}",
+                            },
+                            # O preço precisa de ser em centavos!
+                            'unit_amount': int(evento.preco * 100),
+                        },
+                        'quantity': 1,
+                    }],
+                    mode='payment',
+                    # URLs para onde o utilizador será enviado após a ação
+                    success_url=url_for('public.pagamento_sucesso',
+                                        _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
+                    cancel_url=url_for('public.detalhe_evento', slug=evento.slug, _external=True),
+                    # Metadados para sabermos qual inscrição foi paga
+                    metadata={
+                        'inscricao_id': nova_inscricao.id
+                    }
+                )
+                # Redireciona o utilizador para a página de pagamento do Stripe
+                return redirect(checkout_session.url, code=303)
+
+            except Exception as e:
+                flash(f"Ocorreu um erro ao comunicar com o sistema de pagamento: {e}", "danger")
+                return redirect(url_for('public.detalhe_evento', slug=evento.slug))
         else:
-            flash(f'Inscrição no evento "{evento.nome_evento}" realizada com sucesso!', 'success')
+            # Se for gratuito, a inscrição é aprovada diretamente
+            nova_inscricao.status = 'Aprovada'
+            db.session.commit()
+            flash(f'Inscrição gratuita no evento "{evento.nome_evento}" realizada com sucesso!', 'success')
 
         return redirect(url_for('public.index'))
+        # --- FIM DA NOVA LÓGICA DO STRIPE ---
+
+        # --- if evento.preco > 0 and evento.pix_copia_e_cola:
+        #    flash(evento.pix_copia_e_cola, 'show_pix_modal')
+        # else:
+        #    flash(f'Inscrição no evento "{evento.nome_evento}" realizada com sucesso!', 'success')
+
+        # ---return redirect(url_for('public.index'))
 
     return render_template('inscrever_evento.html',
                          title=f"Inscrição: {evento.nome_evento}",
@@ -132,3 +177,28 @@ def visualizar_chave_publica(slug, categoria_id):
                           categoria=categoria,
                           rounds=rounds,
                           podio=podio)  # Passa o dicionário do pódio para o template
+
+@public_bp.route('/pagamento-sucesso')
+def pagamento_sucesso():
+    session_id = request.args.get('session_id')
+    if not session_id:
+        flash('Sessão de pagamento não encontrada.', 'danger')
+        return redirect(url_for('public.index'))
+
+    try:
+        # Busca a sessão do Stripe
+        session = stripe.checkout.Session.retrieve(session_id)
+        if session.payment_status == 'paid':
+            inscricao_id = session.metadata.get('inscricao_id')
+            inscricao = Inscricao.query.get(inscricao_id)
+            if inscricao and inscricao.status != 'Aprovada':
+                inscricao.status = 'Aprovada'
+                db.session.commit()
+            flash('Pagamento realizado com sucesso! Sua inscrição foi aprovada.', 'success')
+        else:
+            flash('Pagamento não confirmado. Se já foi cobrado, aguarde a aprovação automática.', 'warning')
+    except Exception as e:
+        flash(f'Erro ao verificar pagamento: {e}', 'danger')
+
+    return redirect(url_for('public.index'))
+# A rota de cancelamento não é necessária para o Stripe Checkout, pois o Stripe já lida com isso.

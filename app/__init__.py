@@ -1,5 +1,7 @@
 import locale
 from datetime import datetime
+
+import stripe
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -85,6 +87,7 @@ def create_app(config_class=Config):
         def inject_current_year():
             from datetime import timezone
             return {'current_year': datetime.now(timezone.utc).year}
+
         # --- Fim do Injetor ---
 
         @app.cli.command("import-data")
@@ -190,6 +193,10 @@ def create_app(config_class=Config):
             except Exception as e:
                 db.session.rollback()
                 click.echo(f"Ocorreu um erro durante a importação: {e}")
+
+    # --- CONFIGURAÇÃO DO STRIPE ---
+    # Define a chave de API para toda a aplicação
+    stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
     return app
 
