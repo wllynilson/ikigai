@@ -64,6 +64,14 @@ def inscrever_evento(slug):
             categoria_id=categoria_id_selecionada,
             registrado_por_user_id=current_user.id
         )
+
+        if evento.lotes.count() > 0:
+            preco_a_cobrar = evento.preco_atual
+        # Verifica se há um lote de venda ativo
+        if preco_a_cobrar is None:
+            flash('As inscrições para este evento não estão disponíveis no momento (lotes encerrados).', 'warning')
+            return redirect(url_for('public.detalhe_evento', slug=evento.slug))
+
         db.session.add(nova_inscricao)
         db.session.commit()
 
@@ -71,7 +79,7 @@ def inscrever_evento(slug):
             try:
                 # Cria a sessão de checkout no Stripe
                 checkout_session = stripe.checkout.Session.create(
-                    payment_method_types=['card'],
+                    payment_method_types=['card', 'boleto'],
                     line_items=[{
                         'price_data': {
                             'currency': 'brl',  # Moeda: Real Brasileiro
