@@ -13,10 +13,10 @@ from app.decorators import admin_required
 from app.services import gerar_chave_eliminatoria_simples
 from . import bp
 from .forms import CategoriaForm, EditarParticipanteForm
-from .forms import EventoForm, EquipeForm, EmptyForm
+from .forms import EventoForm, EquipeForm, EmptyForm, LoteVendaForm
 from .. import db
 from ..models import Categoria, Participante, Pagamento
-from ..models import Evento, Equipe, Inscricao, User, Luta
+from ..models import Evento, Equipe, Inscricao, User, Luta, LoteVenda
 from slugify import slugify
 
 
@@ -169,8 +169,13 @@ def listar_inscricoes_evento(evento_id, slug):
     evento = Evento.query.get_or_404(evento_id)
     if evento.slug != slug:
         abort(404)
-    inscricoes = Inscricao.query.filter_by(evento_id=evento_id).all()
-    return render_template('admin/listar_inscricoes.html', inscricoes=inscricoes, evento=evento)
+    # Busca as inscrições relacionadas às categorias do evento
+    inscricoes = Inscricao.query.join(
+        Categoria, Inscricao.categoria_id == Categoria.id
+    ).filter(
+        Categoria.evento_id == evento_id
+    ).all()
+    return render_template('admin/admin_listar_inscricoes_evento.html', inscricoes=inscricoes, evento=evento)
 
 @bp.route('/eventos/novo', methods=['GET', 'POST'])
 @login_required
@@ -316,7 +321,7 @@ def aprovar_inscricao(inscricao_id):
 
         # Criar novo pagamento
         novo_pagamento = Pagamento(
-            valor=categoria.evento.preco,
+            valor=inscricao.categoria.evento.preco_atual,  # Pega o preço do evento associado à categoria
             data_pagamento=datetime.utcnow(),
             metodo='Confirmacao Manual',
             status_pagamento='Concluido',
@@ -429,10 +434,12 @@ def gerenciar_usuarios():
 @bp.route('/usuario/<int:user_id>/resetar-senha', methods=['POST'])
 @admin_required
 def resetar_senha_usuario(user_id):
+    print(f"Tentando resetar senha para usuário {user_id}")
     user = User.query.get_or_404(user_id)
 
     # Evita que um admin resete a própria senha por esta rota
     if user == current_user:
+        print("Tentativa de resetar própria senha")  # Log adicional
         flash('Não pode resetar a sua própria senha por este método.', 'warning')
         return redirect(url_for('admin.gerenciar_usuarios'))
 
@@ -828,3 +835,78 @@ def atribuir_categorias_antigas():
     # Para um pedido GET, apenas mostra a página com o botão de confirmação
     return render_template('admin/admin_ferramenta_atribuicao.html',
                            titulo="Atribuir Categorias a Inscrições Antigas")
+
+
+@bp.route('/evento/<int:evento_id>/lotes', methods=['GET', 'POST'])
+@admin_required
+def gerenciar_lotes_evento(evento_id):
+    evento = Evento.query.get_or_404(evento_id)
+    form = LoteVendaForm()
+
+    if form.validate_on_submit():
+        # Lógica para criar um novo lote
+        novo_lote = LoteVenda(
+            nome=form.nome.data,
+            preco=form.preco.data,
+            data_final=form.data_final.data,
+            evento_id=evento.id
+        )
+        db.session.add(novo_lote)
+        db.session.commit()
+        flash('Novo lote adicionado com sucesso!', 'success')
+        # Redireciona para a mesma página para limpar o formulário e mostrar o novo lote na lista
+        return redirect(url_for('admin.gerenciar_lotes_evento', evento_id=evento.id))
+
+    # No pedido GET, busca e exibe os lotes existentes para este evento
+    lotes_do_evento = LoteVenda.query.filter_by(evento_id=evento.id).order_by(LoteVenda.data_final).all()
+
+    form_excluir = EmptyForm()
+
+    return render_template('admin/admin_gerenciar_lotes.html',
+                           titulo=f"Lotes de Venda: {evento.nome_evento}",
+                           evento=evento,
+                           form=form,
+                           lotes=lotes_do_evento,
+                           form_excluir=form_excluir)
+
+@bp.route('/lote/<int:lote_id>/editar', methods=['GET', 'POST'])
+@admin_required
+def editar_lote(lote_id):
+    lote = LoteVenda.query.get_or_404(lote_id)
+    # Reutilizamos o mesmo LoteVendaForm que já temos
+    form = LoteVendaForm(obj=lote)
+
+    if form.validate_on_submit():
+        try:
+            # Pega nos dados do formulário e atualiza o objeto 'lote'
+            form.populate_obj(lote)
+            db.session.commit()
+            flash('Lote atualizado com sucesso!', 'success')
+            return redirect(url_for('admin.gerenciar_lotes_evento', evento_id=lote.evento_id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar o lote: {e}', 'danger')
+
+    return render_template('admin/admin_form_lote.html',
+                           titulo=f"Editar Lote: {lote.nome}",
+                           form=form,
+                           lote=lote)
+
+@bp.route('/lote/<int:lote_id>/excluir', methods=['POST'])
+@admin_required
+def excluir_lote(lote_id):
+    form = EmptyForm()
+    if form.validate_on_submit():
+        lote = LoteVenda.query.get_or_404(lote_id)
+        evento_id = lote.evento_id # Guarda o ID do evento para o redirecionamento
+        try:
+            db.session.delete(lote)
+            db.session.commit()
+            flash('Lote excluído com sucesso!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Ocorreu um erro ao excluir o lote: {str(e)}", 'danger')
+        return redirect(url_for('admin.gerenciar_lotes_evento', evento_id=evento_id))
+    else:
+        flash('Erro de segurança ao tentar excluir o lote.', 'danger')
+        return redirect(url_for('admin.gerenciar_eventos')) # Redireciona para um local seguro

@@ -8,7 +8,7 @@
           integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_styles.css') }}">
-<meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Admin - {% block title %}{{ titulo }}{% endblock %}</title>
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon">
@@ -69,6 +69,76 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
         integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
         crossorigin="anonymous"></script>
-{% block scripts %}{% endblock %}
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const TabelaDeAcoes = document.querySelector('#tabela-com-acoes');
+            if (TabelaDeAcoes) {
+                TabelaDeAcoes.querySelector('tbody').addEventListener('submit', function (event) {
+                    const form = event.target;
+                    if (!(form instanceof HTMLFormElement) || !form.dataset.action) return;
+                    event.preventDefault();
+
+                    if (form.dataset.action === 'cancel-form' &&
+                        !confirm('Tem a certeza que deseja excluir esta inscrição?')) {
+                        return;
+                    }
+
+                    const url = form.action;
+                    const actionCell = form.parentElement;
+                    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                    if (!csrfMeta) {
+                        alert('Token CSRF não encontrado.');
+                        return;
+                    }
+                    const csrfToken = csrfMeta.getAttribute('content');
+
+                    // Desabilita todos os botões do grupo durante o processamento
+                    const buttons = actionCell.querySelectorAll('button');
+                    buttons.forEach(btn => btn.disabled = true);
+                    actionCell.insertAdjacentHTML('beforeend', '<span class="text-muted ml-2">A processar...</span>');
+
+                    fetch(url, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Status HTTP: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.status === 'success') {
+                                const row = form.closest('tr');
+                                if (data.action === 'delete') {
+                                    row.remove();
+                                } else {
+                                    row.querySelector('.status-cell')
+                                        .innerHTML = data.novo_status_html;
+                                    actionCell.innerHTML =
+                                        '<span class="text-success font-weight-bold">Concluído</span>';
+                                }
+                            } else {
+                                throw new Error(data.message || 'Erro desconhecido.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erro:', error);
+                            alert('Ocorreu um erro de comunicação: ' + error.message);
+                            // Reabilita os botões e remove o texto de processamento
+                            buttons.forEach(btn => btn.disabled = false);
+                            const processingSpan = actionCell.querySelector('.text-muted');
+                            if (processingSpan) processingSpan.remove();
+                        });
+                });
+            }
+        });
+    </script>
+{% endblock %}
 </body>
 </html>

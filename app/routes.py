@@ -67,7 +67,7 @@ def inscrever_evento(slug):
         db.session.add(nova_inscricao)
         db.session.commit()
 
-        if evento.preco > 0:
+        if evento.preco_atual > 0:
             try:
                 # Cria a sessão de checkout no Stripe
                 checkout_session = stripe.checkout.Session.create(
@@ -80,7 +80,7 @@ def inscrever_evento(slug):
                                 'description': f"Categoria: {nova_inscricao.categoria.nome}",
                             },
                             # O preço precisa de ser em centavos!
-                            'unit_amount': int(evento.preco * 100),
+                            'unit_amount': int(evento.preco_atual * 100),
                         },
                         'quantity': 1,
                     }],

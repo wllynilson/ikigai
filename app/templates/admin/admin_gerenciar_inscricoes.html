@@ -35,7 +35,7 @@
             </div>
         </div>
         <div class="table-responsive">
-            <table class="table table-striped table-hover">
+            <table class="table table-striped table-hover" id="tabela-com-acoes">
                 <thead class="thead-dark">
                 <tr>
                     <th>Participante</th>
@@ -143,73 +143,5 @@
 {% endblock %}
 {% block scripts %}
     {{ super() }}
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const tableBody = document.querySelector('table tbody');
-            if (!tableBody) return;
 
-            tableBody.addEventListener('submit', function (event) {
-                const form = event.target;
-                if (!(form instanceof HTMLFormElement) || !form.dataset.action) return;
-                event.preventDefault();
-
-                if (form.dataset.action === 'cancel-form' &&
-                    !confirm('Tem a certeza que deseja excluir esta inscrição?')) {
-                    return;
-                }
-
-                const url = form.action;
-                const actionCell = form.parentElement;
-                const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-                if (!csrfMeta) {
-                    alert('Token CSRF não encontrado.');
-                    return;
-                }
-                const csrfToken = csrfMeta.getAttribute('content');
-
-                // Desabilita todos os botões do grupo durante o processamento
-                const buttons = actionCell.querySelectorAll('button');
-                buttons.forEach(btn => btn.disabled = true);
-                actionCell.insertAdjacentHTML('beforeend', '<span class="text-muted ml-2">A processar...</span>');
-
-                fetch(url, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    }
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Status HTTP: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.status === 'success') {
-                            const row = form.closest('tr');
-                            if (data.action === 'delete') {
-                                row.remove();
-                            } else {
-                                row.querySelector('.status-cell')
-                                    .innerHTML = data.novo_status_html;
-                                actionCell.innerHTML =
-                                    '<span class="text-success font-weight-bold">Concluído</span>';
-                            }
-                        } else {
-                            throw new Error(data.message || 'Erro desconhecido.');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro:', error);
-                        alert('Ocorreu um erro de comunicação: ' + error.message);
-                        // Reabilita os botões e remove o texto de processamento
-                        buttons.forEach(btn => btn.disabled = false);
-                        const processingSpan = actionCell.querySelector('.text-muted');
-                        if (processingSpan) processingSpan.remove();
-                    });
-            });
-        });
-    </script>
 {% endblock %}

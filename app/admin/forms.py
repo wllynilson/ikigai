@@ -87,3 +87,15 @@ class EquipeForm(FlaskForm):
 class EmptyForm(FlaskForm):
     """Um formulário vazio usado para ações POST protegidas por CSRF, como exclusão."""
     submit = SubmitField('Submit')
+
+class LoteVendaForm(FlaskForm):
+    """Formulário para criar ou editar um Lote de Venda."""
+    nome = StringField('Nome do Lote',
+                       validators=[DataRequired(), Length(max=100)],
+                       description="Ex: Lote 1, Lote Promocional, Virada de Lote")
+    preco = FloatField('Preço (R$)',
+                       validators=[DataRequired(), NumberRange(min=0)])
+    data_final = DateTimeLocalField('Data e Hora Final do Lote',
+                                    format='%Y-%m-%dT%H:%M',
+                                    validators=[DataRequired()])
+    submit = SubmitField('Salvar Lote')

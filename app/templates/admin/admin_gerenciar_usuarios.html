@@ -48,6 +48,7 @@
                                 <form method="POST"
                                       action="{{ url_for('admin.resetar_senha_usuario', user_id=user.id) }}"
                                       onsubmit="return confirm('Tem a certeza que deseja resetar a senha para este usuário? Uma nova senha será gerada.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-warning btn-sm">
                                         <i class="fas fa-key"></i> Resetar Senha
                                     </button>

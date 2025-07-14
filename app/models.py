@@ -83,12 +83,34 @@ class Evento(db.Model):
     imagem_palestrante = db.Column(db.String(300))
     descricao = db.Column(db.Text)
     local_evento = db.Column(db.String(200))
-    preco = db.Column(db.Float, default=0.0)
     numero_vagas = db.Column(db.Integer, nullable=False)
     pix_copia_e_cola = db.Column(db.Text)
     slug = db.Column(db.String(255), unique=True, index=True, nullable=False)
-
+    lotes = db.relationship('LoteVenda', backref='evento', lazy='dynamic', cascade="all, delete-orphan")
     categorias = db.relationship('Categoria', backref='evento', lazy='dynamic', cascade="all, delete-orphan")
+
+    @property
+    def lote_ativo(self):
+        """Encontra e retorna o primeiro lote de venda que ainda não expirou."""
+        agora = datetime.now()
+        # Busca, entre os lotes deste evento, o primeiro cuja data final é no futuro,
+        # ordenando pelo que expira mais cedo.
+        lote_disponivel = self.lotes.filter(
+            LoteVenda.data_final >= agora
+        ).order_by(LoteVenda.data_final.asc()).first()
+
+        return lote_disponivel
+
+    @property
+    def preco_atual(self):
+        """Retorna o preço do lote ativo. Se não houver lote ativo, retorna None."""
+        lote = self.lote_ativo
+        if lote:
+            return lote.preco
+
+        # Se não encontrou nenhum lote ativo (todos expiraram), retorna None.
+        # Podemos tratar isso na nossa lógica de inscrição para mostrar "Vendas Encerradas".
+        return 0
 
     def __repr__(self):
         return f'<Evento {self.nome_evento}>'
@@ -155,3 +177,15 @@ class Luta(db.Model):
 
     def __repr__(self):
         return f'<Luta {self.id}>'
+
+class LoteVenda(db.Model):
+    __tablename__ = 'lotes_venda'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False) # Ex: "Lote Promocional", "2º Lote"
+    preco = db.Column(db.Float, nullable=False)
+    data_final = db.Column(db.DateTime, nullable=False) # Data e hora em que este lote expira
+    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<LoteVenda {self.nome} - R${self.preco}>'
+

@@ -150,8 +150,8 @@
 
                                 <div class="event-footer">
                                     <span class="event-price-compact">
-                                        {% if evento.preco > 0 %}
-                                            R$ {{ ("%.2f"|format(evento.preco|float))|replace('.', ',') }}
+                                        {% if evento.preco_atual > 0 %}
+                                            R$ {{ ("%.2f"|format(evento.preco_atual|float))|replace('.', ',') }}
                                         {% else %}
                                             Gratuito
                                         {% endif %}

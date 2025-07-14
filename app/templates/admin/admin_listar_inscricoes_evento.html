@@ -1,47 +1,80 @@
 {% extends 'admin/admin_base.html' %}
 
-{% block title %}Inscritos em {{ evento.nome_evento }} - Admin{% endblock %}
-
-{% block page_title %}Inscritos: {{ evento.nome_evento }}{% endblock %}
+{% block title %}Inscrições para {{ evento.nome_evento }}{% endblock %}
+{% block page_title %}Inscrições para: {{ evento.nome_evento }}{% endblock %}
 
 {% block content %}
-<p><strong>Data do Evento:</strong> {{ evento.data_hora_evento.strftime('%d/%m/%Y às %H:%M') }}</p>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="tabela-com-acoes">
+                    <thead class="thead-dark">
+                    <tr>
+                        <th>Participante</th>
+                        <th>Equipe</th>
+                        <th>CPF</th>
+                        <th>Telefone</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for inscricao in inscricoes %}
+                        <tr>
+                            <td>{{ inscricao.participante.nome_completo or 'N/D' }}</td>
+                            <td>{{ inscricao.participante.equipe.nome_equipe }}</td>
+                            <td>{{ inscricao.participante.cpf or 'N/D' }}</td>
+                            <td>{{ inscricao.participante.telefone or 'N/D' }}</td>
 
-<a href="{{ url_for('admin.gerenciar_eventos') }}" class="btn btn-secondary btn-sm" style="margin-bottom:20px;">&laquo; Voltar para Gerenciar Eventos</a>
+                            <td class="status-cell text-center">
+                                {% if inscricao.status == 'Aprovada' %}
+                                    <span class="badge badge-success">{{ inscricao.status }}</span>
+                                {% elif inscricao.status == 'Rejeitada' %}
+                                    <span class="badge badge-danger">{{ inscricao.status }}</span>
+                                {% else %}
+                                    <span class="badge badge-warning">{{ inscricao.status }}</span>
+                                {% endif %}
+                            </td>
 
-{% if inscricoes %}
-    <table class="table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Nome Completo</th>
-                <th>CPF</th>
-                <th>Telefone</th>
-                <th>Equipe</th>
-                <th>Data da Inscrição</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for inscricao in inscricoes %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ inscricao.participante.nome_completo }}</td>
-                <td>{{ inscricao.participante.cpf }}</td>
-                <td>{{ inscricao.participante.telefone }}</td>
-                <td>
-                    {% if inscricao.participante.equipe.nome_equipe %}
-                        {{ inscricao.participante.equipe.nome_equipe }}
-                        <small>(Prof. {{ inscricao.participante.equipe.professor_responsavel }})</small>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin.editar_inscricao', inscricao_id=inscricao.id) }}"
+                                       class="btn btn-primary btn-sm" title="Editar Inscrição"><i
+                                            class="fas fa-pencil-alt"></i></a>
+
+                                    {% if inscricao.status == 'Pendente' %}
+                                        <form class="d-inline" data-action="approve-form"
+                                              action="{{ url_for('admin.aprovar_inscricao', inscricao_id=inscricao.id) }}"
+                                              method="post">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-success btn-sm" title="Aprovar"><i
+                                                    class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                        <form class="d-inline" data-action="reject-form"
+                                              action="{{ url_for('admin.rejeitar_inscricao', inscricao_id=inscricao.id) }}"
+                                              method="post">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-secondary btn-sm" title="Rejeitar"><i
+                                                    class="fas fa-times"></i></button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
                     {% else %}
-                        Equipe não informada
-                    {% endif %}
-                </td>
-                <td>{{ inscricao.data_inscricao.strftime('%d/%m/%Y %H:%M') }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% else %}
-    <p>Nenhum participante inscrito neste evento ainda.</p>
-{% endif %}
+                        <tr>
+                            <td colspan="6" class="text-center">Nenhuma inscrição encontrada para este evento.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('admin.gerenciar_eventos') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i>
+            Voltar para Eventos</a>
+    </div>
 {% endblock %}

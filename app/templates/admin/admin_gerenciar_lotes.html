@@ -1,0 +1,80 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header">
+                    Lotes de Venda Cadastrados
+                </div>
+                <div class="card-body">
+                    {% if lotes %}
+                        <ul class="list-group">
+                            {% for lote in lotes %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ lote.nome }}</strong> - <span class="text-success font-weight-bold">R$ {{ ("%.2f"|format(lote.preco|float))|replace('.', ',') }}</span><br>
+                                        <small class="text-muted">Válido
+                                            até: {{ lote.data_final.strftime('%d/%m/%Y às %H:%M') }}</small>
+                                    </div>
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
+                                        <a href="{{ url_for('admin.editar_lote', lote_id=lote.id) }}"
+                                           class="btn btn-outline-primary btn-sm shadow-sm" title="Editar Lote">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </a>
+                                        <form class="d-inline" method="POST"
+                                              action="{{ url_for('admin.excluir_lote', lote_id=lote.id) }}"
+                                              onsubmit="return confirm('Tem a certeza que deseja excluir este lote?');">
+                                            {{ form_excluir.hidden_tag() }}
+                                            <button><i class="fas fa-trash-alt"></i> </button>
+                                        </form>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Nenhum lote de venda cadastrado para este evento ainda.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header">
+                    Adicionar Novo Lote
+                </div>
+                <div class="card-body">
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+                        <div class="form-group">
+                            {{ form.nome.label(class="font-weight-bold") }}
+                            {{ form.nome(class="form-control") }}
+                            {% if form.nome.description %}
+                                <small class="form-text text-muted">{{ form.nome.description }}</small>{% endif %}
+                        </div>
+                        <div class="form-group">
+                            {{ form.preco.label(class="font-weight-bold") }}
+                            {{ form.preco(class="form-control") }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.data_final.label(class="font-weight-bold") }}
+                            {{ form.data_final(class="form-control") }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('admin.gerenciar_eventos') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i>
+            Voltar para Eventos</a>
+    </div>
+{% endblock %}

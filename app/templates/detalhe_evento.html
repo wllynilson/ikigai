@@ -64,24 +64,30 @@
                     </div>
                     <div class="detail-item price-item">
                         <i class="detail-icon fas fa-tag"></i>
-                        <div>
-                            <strong>Investimento:</strong>
-                            <span class="price-value">
-                        {% if evento.preco > 0 %}
-                            R$ {{ ("%.2f"|format(evento.preco|float))|replace('.', ',') }}
-                        {% else %}
-                            Gratuito
-                        {% endif %}
-                        </span>
+                        <div class="detail-content">
+                            <div class="detail-label">Investimento</div>
+                            <div class="detail-value price-value">
+                                {% if evento.preco_atual is not none and evento.preco_atual > 0 %}
+                                    R$ {{ ("%.2f"|format(evento.preco_atual|float))|replace('.', ',') }}
+                                {% elif evento.preco_atual == 0 %}
+                                    Gratuito
+                                {% else %}
+                                    Vendas Encerradas
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="subscribe-section">
-                    {% if evento.data_hora_evento < now %}
-                        <span class="btn-subscribe disabled" aria-disabled="true">Inscrições Encerradas</span>
+                    {% if evento.lote_ativo %}
+                        <a href="{{ url_for('public.inscrever_evento', slug=evento.slug) }}"
+                           class="btn-subscribe">
+                            <i class="fas fa-ticket-alt mr-2"></i>
+                            Inscrever-se Agora (Lote: {{ evento.lote_ativo.nome }})
+                        </a>
                     {% else %}
-                        <a href="{{ url_for('public.inscrever_evento', slug=evento.slug) }}" class="btn-subscribe">
-                            <i class="fas fa-ticket-alt mr-2"></i> Inscrever-se Agora
+                        <a href="#" class="btn-subscribe disabled" aria-disabled="true">
+                            Inscrições Encerradas
                         </a>
                     {% endif %}
                 </div>
