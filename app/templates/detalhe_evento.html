@@ -81,9 +81,13 @@
                 <div class="subscribe-section">
                     {% if evento.lote_ativo %}
                         <a href="{{ url_for('public.inscrever_evento', slug=evento.slug) }}"
-                           class="btn-subscribe">
-                            <i class="fas fa-ticket-alt mr-2"></i>
-                            Inscrever-se Agora (Lote: {{ evento.lote_ativo.nome }})
+                           class="btn-subscribe mb-2">
+                            <i class="fas fa-user-plus mr-2"></i>
+                            Inscrever-me
+                        </a>
+                        <a href="{{ url_for('public.inscrever_terceiro', slug=evento.slug) }}"
+                           class="btn-subscribe ml-2">
+                            Inscrever Outro Atleta
                         </a>
                     {% else %}
                         <a href="#" class="btn-subscribe disabled" aria-disabled="true">

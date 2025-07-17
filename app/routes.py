@@ -10,10 +10,11 @@ from flask_login import login_required, current_user
 
 from app import db
 from app.models import Evento, Categoria, Luta  # Certifique-se que Categoria e Luta estão importados
-from app.models import Inscricao, User
-from app.public.forms import InscricaoEventoForm  # Importa o novo formulário
+from app.models import Inscricao, User, Participante, Equipe
+from app.public.forms import InscricaoEventoForm, InscricaoTerceiroForm  # Importa o novo formulário
 
 public_bp = Blueprint('public', __name__)
+
 
 @public_bp.route('/')
 def index():
@@ -24,6 +25,7 @@ def index():
     return render_template('index.html',
                            eventos=eventos,
                            now=datetime.now())
+
 
 @public_bp.route('/inscrever/<string:slug>', methods=['GET', 'POST'])
 @login_required
@@ -125,9 +127,9 @@ def inscrever_evento(slug):
         # ---return redirect(url_for('public.index'))
 
     return render_template('inscrever_evento.html',
-                         title=f"Inscrição: {evento.nome_evento}",
-                         form=form,
-                         evento=evento)
+                           title=f"Inscrição: {evento.nome_evento}",
+                           form=form,
+                           evento=evento)
 
 
 @public_bp.route('/evento/<string:slug>')
@@ -139,52 +141,53 @@ def detalhe_evento(slug):
 
 @public_bp.route('/evento/<string:slug>/categoria/<int:categoria_id>/chave')
 def visualizar_chave_publica(slug, categoria_id):
-   """Exibe a página pública da chave de competição para uma categoria."""
-   evento = Evento.query.filter_by(slug=slug).first_or_404()
-   categoria = Categoria.query.filter_by(id=categoria_id, evento_id=evento.id).first_or_404()
+    """Exibe a página pública da chave de competição para uma categoria."""
+    evento = Evento.query.filter_by(slug=slug).first_or_404()
+    categoria = Categoria.query.filter_by(id=categoria_id, evento_id=evento.id).first_or_404()
 
-   lutas = Luta.query.filter_by(categoria_id=categoria_id).order_by(Luta.round, Luta.ordem_na_chave).all()
+    lutas = Luta.query.filter_by(categoria_id=categoria_id).order_by(Luta.round, Luta.ordem_na_chave).all()
 
-   if not lutas:
-       flash('A chave para esta categoria ainda não está disponível.', 'info')
-       return redirect(url_for('public.detalhe_evento', slug=slug))
+    if not lutas:
+        flash('A chave para esta categoria ainda não está disponível.', 'info')
+        return redirect(url_for('public.detalhe_evento', slug=slug))
 
-   rounds = defaultdict(list)
-   for luta in lutas:
-       rounds[luta.round].append(luta)
+    rounds = defaultdict(list)
+    for luta in lutas:
+        rounds[luta.round].append(luta)
 
-   # --- NOVA LÓGICA PARA DETERMINAR O PÓDIO ---
-   podio = None
-   if rounds:
-       max_round = max(rounds.keys())
-       lutas_da_ultima_ronda = rounds.get(max_round, [])
+    # --- NOVA LÓGICA PARA DETERMINAR O PÓDIO ---
+    podio = None
+    if rounds:
+        max_round = max(rounds.keys())
+        lutas_da_ultima_ronda = rounds.get(max_round, [])
 
-       # Procura pela final (ordem 1) e pela disputa de 3º lugar (ordem > 1)
-       final = next((l for l in lutas_da_ultima_ronda if l.ordem_na_chave == 1), None)
-       luta_terceiro = next((l for l in lutas_da_ultima_ronda if l.ordem_na_chave > 1), None)
+        # Procura pela final (ordem 1) e pela disputa de 3º lugar (ordem > 1)
+        final = next((l for l in lutas_da_ultima_ronda if l.ordem_na_chave == 1), None)
+        luta_terceiro = next((l for l in lutas_da_ultima_ronda if l.ordem_na_chave > 1), None)
 
-       # Verifica se ambas as lutas decisivas (final e 3º lugar) têm um vencedor
-       if final and final.vencedor_id and luta_terceiro and luta_terceiro.vencedor_id:
-           # Determina o 1º e 2º lugar a partir da final
-           vencedor_final = User.query.get(final.vencedor_id)
-           # O segundo lugar é o competidor que não é o vencedor
-           segundo_lugar = final.competidor1 if final.vencedor_id == final.competidor2_id else final.competidor2
+        # Verifica se ambas as lutas decisivas (final e 3º lugar) têm um vencedor
+        if final and final.vencedor_id and luta_terceiro and luta_terceiro.vencedor_id:
+            # Determina o 1º e 2º lugar a partir da final
+            vencedor_final = User.query.get(final.vencedor_id)
+            # O segundo lugar é o competidor que não é o vencedor
+            segundo_lugar = final.competidor1 if final.vencedor_id == final.competidor2_id else final.competidor2
 
-           # O 3º lugar é o vencedor da outra luta
-           terceiro_lugar = User.query.get(luta_terceiro.vencedor_id)
+            # O 3º lugar é o vencedor da outra luta
+            terceiro_lugar = User.query.get(luta_terceiro.vencedor_id)
 
-           podio = {
-               'primeiro': vencedor_final,
-               'segundo': segundo_lugar,
-               'terceiro': terceiro_lugar
-           }
-   # --- FIM DA LÓGICA DO PÓDIO ---
+            podio = {
+                'primeiro': vencedor_final,
+                'segundo': segundo_lugar,
+                'terceiro': terceiro_lugar
+            }
+    # --- FIM DA LÓGICA DO PÓDIO ---
 
-   return render_template('chave_publica.html',
-                          titulo=f"Chave: {categoria.nome}",
-                          categoria=categoria,
-                          rounds=rounds,
-                          podio=podio)  # Passa o dicionário do pódio para o template
+    return render_template('chave_publica.html',
+                           titulo=f"Chave: {categoria.nome}",
+                           categoria=categoria,
+                           rounds=rounds,
+                           podio=podio)  # Passa o dicionário do pódio para o template
+
 
 @public_bp.route('/pagamento-sucesso')
 def pagamento_sucesso():
@@ -209,4 +212,136 @@ def pagamento_sucesso():
         flash(f'Erro ao verificar pagamento: {e}', 'danger')
 
     return redirect(url_for('public.index'))
+
+
 # A rota de cancelamento não é necessária para o Stripe Checkout, pois o Stripe já lida com isso.
+
+@public_bp.route('/inscrever-terceiro/<string:slug>', methods=['GET', 'POST'])
+@login_required
+def inscrever_terceiro(slug):
+    print("Iniciando inscrição de terceiro")
+    print(f"Dados do formulário: {request.form}")
+
+    evento = Evento.query.filter_by(slug=slug).first_or_404()
+
+    # Verificação se o evento está com vagas disponíveis
+    if evento.numero_vagas <= 0:
+        flash('As inscrições para este evento estão encerradas (vagas esgotadas).', 'warning')
+        return redirect(url_for('public.detalhe_evento', slug=evento.slug))
+
+    form = InscricaoTerceiroForm()
+
+    # Popula os menus dropdown de equipes e categorias
+    form.equipe_id.choices = [(e.id, e.nome_equipe) for e in Equipe.query.order_by('nome_equipe').all()]
+    form.categoria_id.choices = [(c.id, c.nome) for c in evento.categorias]
+
+    if form.validate_on_submit():
+        print("Formulário validado com sucesso")
+
+        try:
+            # Criar novo participante
+            novo_participante = Participante(
+                nome_completo=form.nome_completo.data,
+                cpf=form.cpf.data,
+                telefone=form.telefone.data,
+                data_nascimento=form.data_nascimento.data,
+                peso=form.peso.data,
+                graduacao=form.graduacao.data,
+                equipe_id=form.equipe_id.data
+            )
+
+            db.session.add(novo_participante)
+            db.session.flush()  # Para obter o ID do novo participante
+
+            # Criar nova inscrição
+            nova_inscricao = Inscricao(
+                participante_id=novo_participante.id,
+                categoria_id=form.categoria_id.data,
+                registrado_por_user_id=current_user.id,
+                status='Pendente'
+            )
+
+            if evento.lotes.count() > 0:
+                preco_a_cobrar = evento.preco_atual
+            # Verifica se há um lote de venda ativo
+            if preco_a_cobrar is None:
+                flash('As inscrições para este evento não estão disponíveis no momento (lotes encerrados).', 'warning')
+                return redirect(url_for('public.detalhe_evento', slug=evento.slug))
+
+            db.session.add(nova_inscricao)
+            db.session.flush()
+
+            if evento.preco_atual > 0:
+                try:
+                    # Cria a sessão de checkout no Stripe
+                    checkout_session = stripe.checkout.Session.create(
+                        payment_method_types=['card', 'boleto'],
+                        line_items=[{
+                            'price_data': {
+                                'currency': 'brl',  # Moeda: Real Brasileiro
+                                'product_data': {
+                                    'name': f"Inscrição: {evento.nome_evento}",
+                                    'description': f"Categoria: {nova_inscricao.categoria.nome}",
+                                },
+                                # O preço precisa de ser em centavos!
+                                'unit_amount': int(evento.preco_atual * 100),
+                            },
+                            'quantity': 1,
+                        }],
+                        mode='payment',
+                        # URLs para onde o utilizador será enviado após a ação
+                        success_url=url_for('public.pagamento_sucesso',
+                                            _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
+                        cancel_url=url_for('public.detalhe_evento', slug=evento.slug, _external=True),
+                        # Metadados para sabermos qual inscrição foi paga
+                        metadata={
+                            'inscricao_id': nova_inscricao.id
+                        }
+                    )
+                    # Redireciona o utilizador para a página de pagamento do Stripe
+                    return redirect(checkout_session.url, code=303)
+
+                except Exception as e:
+                    flash(f"Ocorreu um erro ao comunicar com o sistema de pagamento: {e}", "danger")
+                    return redirect(url_for('public.detalhe_evento', slug=evento.slug))
+            else:
+                # Se for gratuito, a inscrição é aprovada diretamente
+                nova_inscricao.status = 'Aprovada'
+                db.session.commit()
+                flash(f'Inscrição gratuita no evento "{evento.nome_evento}" realizada com sucesso!', 'success')
+
+            return redirect(url_for('public.index'))
+            # --- FIM DA NOVA LÓGICA DO STRIPE ---
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"Erro ao processar inscrição: {str(e)}")
+            flash('Erro ao processar inscrição. Tente novamente.', 'danger')
+
+    # Se não for submissão ou houver erros de validação
+    return render_template('inscrever_terceiro.html', title=f'Inscrever em {evento.nome_evento}', form=form,
+                           evento=evento)
+
+# @public_bp.route('/inscrever-terceiro/<string:slug>', methods=['GET', 'POST'])
+# @login_required
+# def inscrever_terceiro(slug):
+#     evento = Evento.query.get_or_404(slug)
+#     form = InscricaoTerceiroForm()
+#
+#     form.equipe_id.choices = [(e.id, e.nome_equipe) for e in Equipe.query.order_by('nome_equipe').all()]
+#     form.categoria_id.choices = [(c.id, c.nome) for c in evento.categorias]
+#
+#     if form.validate_on_submit():
+#         # ... (a sua lógica de criar o participante e a inscrição fica aqui) ...
+#         # (esta parte só será executada se a validação passar)
+#         flash('Inscrição realizada com sucesso!', 'success')
+#         return redirect(url_for('public.index'))
+#     else:
+#         # LINHA DE DEPURAÇÃO: Se a validação falhar, imprime os erros no console do Flask
+#         if request.method == 'POST':
+#             print("!!! ERROS DE VALIDAÇÃO DO FORMULÁRIO:", form.errors)
+#
+#     return render_template('inscrever_terceiro.html',
+#                            title="Inscrever Outro Atleta",
+#                            form=form,
+#                            evento=evento)
