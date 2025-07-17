@@ -222,21 +222,25 @@ def inscrever_terceiro(slug):
     print("Iniciando inscrição de terceiro")
     print(f"Dados do formulário: {request.form}")
 
+    # 1 Pega o evento pelo slug
     evento = Evento.query.filter_by(slug=slug).first_or_404()
 
-    # Verificação se o evento está com vagas disponíveis
+    # 2  verifica se o evento está ativo
     if evento.numero_vagas <= 0:
         flash('As inscrições para este evento estão encerradas (vagas esgotadas).', 'warning')
         return redirect(url_for('public.detalhe_evento', slug=evento.slug))
 
+    # 3 Verifica se o utilizador tem permissão para inscrever terceiros
     form = InscricaoTerceiroForm()
 
-    # Popula os menus dropdown de equipes e categorias
+    # 4 Popula os campos do formulário com as equipes e categorias disponíveis
     form.equipe_id.choices = [(e.id, e.nome_equipe) for e in Equipe.query.order_by('nome_equipe').all()]
     form.categoria_id.choices = [(c.id, c.nome) for c in evento.categorias]
 
+    # 5 Verifica se o formulário foi submetido e se é válido
     if form.validate_on_submit():
         print("Formulário validado com sucesso")
+        categoria_id_selecionada = form.categoria_id.data
 
         try:
             # Criar novo participante
@@ -249,16 +253,15 @@ def inscrever_terceiro(slug):
                 graduacao=form.graduacao.data,
                 equipe_id=form.equipe_id.data
             )
-
             db.session.add(novo_participante)
-            db.session.flush()  # Para obter o ID do novo participante
+            db.session.flush()  # Garante que o ID do novo participante está disponível
 
+            print(f"Novo participante criado: {novo_participante.nome_completo}")
             # Criar nova inscrição
             nova_inscricao = Inscricao(
                 participante_id=novo_participante.id,
                 categoria_id=form.categoria_id.data,
                 registrado_por_user_id=current_user.id,
-                status='Pendente'
             )
 
             if evento.lotes.count() > 0:
@@ -268,8 +271,8 @@ def inscrever_terceiro(slug):
                 flash('As inscrições para este evento não estão disponíveis no momento (lotes encerrados).', 'warning')
                 return redirect(url_for('public.detalhe_evento', slug=evento.slug))
 
-            db.session.add(nova_inscricao)
-            db.session.flush()
+            db.session.add(nova_inscricao)  # Adiciona a nova inscrição à sessão
+            db.session.flush()  # Garante que o ID da nova inscrição está disponível
 
             if evento.preco_atual > 0:
                 try:
@@ -300,7 +303,6 @@ def inscrever_terceiro(slug):
                     )
                     # Redireciona o utilizador para a página de pagamento do Stripe
                     return redirect(checkout_session.url, code=303)
-
                 except Exception as e:
                     flash(f"Ocorreu um erro ao comunicar com o sistema de pagamento: {e}", "danger")
                     return redirect(url_for('public.detalhe_evento', slug=evento.slug))
@@ -309,7 +311,6 @@ def inscrever_terceiro(slug):
                 nova_inscricao.status = 'Aprovada'
                 db.session.commit()
                 flash(f'Inscrição gratuita no evento "{evento.nome_evento}" realizada com sucesso!', 'success')
-
             return redirect(url_for('public.index'))
             # --- FIM DA NOVA LÓGICA DO STRIPE ---
 
