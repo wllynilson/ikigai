@@ -60,20 +60,14 @@ def inscrever_evento(slug):
             flash('Você já está inscrito nesta categoria.', 'info')
             return redirect(url_for('public.detalhe_evento', slug=evento.slug))
 
+        db.session.add(participante)
+        db.session.flush()
         # Cria a nova inscrição
         nova_inscricao = Inscricao(
             participante_id=participante.id,
             categoria_id=categoria_id_selecionada,
             registrado_por_user_id=current_user.id
         )
-
-        if evento.lotes.count() > 0:
-            preco_a_cobrar = evento.preco_atual
-        # Verifica se há um lote de venda ativo
-        if preco_a_cobrar is None:
-            flash('As inscrições para este evento não estão disponíveis no momento (lotes encerrados).', 'warning')
-            return redirect(url_for('public.detalhe_evento', slug=evento.slug))
-
         db.session.add(nova_inscricao)
         db.session.commit()
 
@@ -118,18 +112,10 @@ def inscrever_evento(slug):
 
         return redirect(url_for('public.index'))
         # --- FIM DA NOVA LÓGICA DO STRIPE ---
-
-        # --- if evento.preco > 0 and evento.pix_copia_e_cola:
-        #    flash(evento.pix_copia_e_cola, 'show_pix_modal')
-        # else:
-        #    flash(f'Inscrição no evento "{evento.nome_evento}" realizada com sucesso!', 'success')
-
-        # ---return redirect(url_for('public.index'))
-
     return render_template('inscrever_evento.html',
-                           title=f"Inscrição: {evento.nome_evento}",
-                           form=form,
-                           evento=evento)
+                         title=f"Inscrição: {evento.nome_evento}",
+                         form=form,
+                         evento=evento)
 
 
 @public_bp.route('/evento/<string:slug>')
@@ -204,16 +190,16 @@ def pagamento_sucesso():
             inscricao = Inscricao.query.get(inscricao_id)
             if inscricao and inscricao.status != 'Aprovada':
                 inscricao.status = 'Aprovada'
+                db.session.add(inscricao)
                 db.session.commit()
             flash('Pagamento realizado com sucesso! Sua inscrição foi aprovada.', 'success')
         else:
             flash('Pagamento não confirmado. Se já foi cobrado, aguarde a aprovação automática.', 'warning')
     except Exception as e:
         flash(f'Erro ao verificar pagamento: {e}', 'danger')
+        print(f"Erro ao verificar pagamento: {e}")
 
     return redirect(url_for('public.index'))
-
-
 # A rota de cancelamento não é necessária para o Stripe Checkout, pois o Stripe já lida com isso.
 
 @public_bp.route('/inscrever-terceiro/<string:slug>', methods=['GET', 'POST'])
@@ -224,125 +210,80 @@ def inscrever_terceiro(slug):
 
     # 1 Pega o evento pelo slug
     evento = Evento.query.filter_by(slug=slug).first_or_404()
+    form = InscricaoTerceiroForm()
 
-    # 2  verifica se o evento está ativo
+    # Popula os campos do formulário com as equipes e categorias disponíveis
+    form.equipe_id.choices = [(e.id, e.nome_equipe) for e in Equipe.query.order_by('nome_equipe').all()]
+    form.categoria_id.choices = [(c.id, c.nome) for c in evento.categorias]
+
+    # Verifica se o evento está ativo
     if evento.numero_vagas <= 0:
         flash('As inscrições para este evento estão encerradas (vagas esgotadas).', 'warning')
         return redirect(url_for('public.detalhe_evento', slug=evento.slug))
 
-    # 3 Verifica se o utilizador tem permissão para inscrever terceiros
-    form = InscricaoTerceiroForm()
-
-    # 4 Popula os campos do formulário com as equipes e categorias disponíveis
-    form.equipe_id.choices = [(e.id, e.nome_equipe) for e in Equipe.query.order_by('nome_equipe').all()]
-    form.categoria_id.choices = [(c.id, c.nome) for c in evento.categorias]
-
-    # 5 Verifica se o formulário foi submetido e se é válido
     if form.validate_on_submit():
-        print("Formulário validado com sucesso")
-        categoria_id_selecionada = form.categoria_id.data
+        # Cria o novo Participante
+        novo_participante = Participante(
+            nome_completo=form.nome_completo.data,
+            cpf=form.cpf.data,
+            telefone=form.telefone.data,
+            data_nascimento=form.data_nascimento.data,
+            peso=form.peso.data,
+            graduacao=form.graduacao.data,
+            equipe_id=form.equipe_id.data
+        )
+        db.session.add(novo_participante)
+        db.session.flush()  # Atribui um ID ao novo participante antes do commit
 
-        try:
-            # Criar novo participante
-            novo_participante = Participante(
-                nome_completo=form.nome_completo.data,
-                cpf=form.cpf.data,
-                telefone=form.telefone.data,
-                data_nascimento=form.data_nascimento.data,
-                peso=form.peso.data,
-                graduacao=form.graduacao.data,
-                equipe_id=form.equipe_id.data
-            )
-            db.session.add(novo_participante)
-            db.session.flush()  # Garante que o ID do novo participante está disponível
+        # # Cria a nova inscrição
+        nova_inscricao = Inscricao(
+            participante_id=novo_participante.id,
+            categoria_id=form.categoria_id.data,
+            registrado_por_user_id=current_user.id,
+        )
+        db.session.add(nova_inscricao)
+        db.session.commit()
 
-            print(f"Novo participante criado: {novo_participante.nome_completo}")
-            # Criar nova inscrição
-            nova_inscricao = Inscricao(
-                participante_id=novo_participante.id,
-                categoria_id=form.categoria_id.data,
-                registrado_por_user_id=current_user.id,
-            )
-
-            if evento.lotes.count() > 0:
-                preco_a_cobrar = evento.preco_atual
-            # Verifica se há um lote de venda ativo
-            if preco_a_cobrar is None:
-                flash('As inscrições para este evento não estão disponíveis no momento (lotes encerrados).', 'warning')
-                return redirect(url_for('public.detalhe_evento', slug=evento.slug))
-
-            db.session.add(nova_inscricao)  # Adiciona a nova inscrição à sessão
-            db.session.flush()  # Garante que o ID da nova inscrição está disponível
-
-            if evento.preco_atual > 0:
-                try:
-                    # Cria a sessão de checkout no Stripe
-                    checkout_session = stripe.checkout.Session.create(
-                        payment_method_types=['card', 'boleto'],
-                        line_items=[{
-                            'price_data': {
-                                'currency': 'brl',  # Moeda: Real Brasileiro
-                                'product_data': {
-                                    'name': f"Inscrição: {evento.nome_evento}",
-                                    'description': f"Categoria: {nova_inscricao.categoria.nome}",
-                                },
-                                # O preço precisa de ser em centavos!
-                                'unit_amount': int(evento.preco_atual * 100),
+        if evento.lote_ativo and evento.lote_ativo.preco > 0:
+            try:
+                # Cria a sessão de checkout no Stripe
+                checkout_session = stripe.checkout.Session.create(
+                    payment_method_types=['card', 'boleto'],
+                    line_items=[{
+                        'price_data': {
+                            'currency': 'brl',  # Moeda: Real Brasileiro
+                            'product_data': {
+                                'name': f"Inscrição: {evento.nome_evento}",
+                                'description': f"Categoria: {nova_inscricao.categoria.nome} - Para o Participante: {novo_participante.nome_completo}",
                             },
-                            'quantity': 1,
-                        }],
-                        mode='payment',
-                        # URLs para onde o utilizador será enviado após a ação
-                        success_url=url_for('public.pagamento_sucesso',
-                                            _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
-                        cancel_url=url_for('public.detalhe_evento', slug=evento.slug, _external=True),
-                        # Metadados para sabermos qual inscrição foi paga
-                        metadata={
-                            'inscricao_id': nova_inscricao.id
-                        }
-                    )
-                    # Redireciona o utilizador para a página de pagamento do Stripe
-                    return redirect(checkout_session.url, code=303)
-                except Exception as e:
-                    flash(f"Ocorreu um erro ao comunicar com o sistema de pagamento: {e}", "danger")
-                    return redirect(url_for('public.detalhe_evento', slug=evento.slug))
-            else:
-                # Se for gratuito, a inscrição é aprovada diretamente
-                nova_inscricao.status = 'Aprovada'
-                db.session.commit()
-                flash(f'Inscrição gratuita no evento "{evento.nome_evento}" realizada com sucesso!', 'success')
-            return redirect(url_for('public.index'))
-            # --- FIM DA NOVA LÓGICA DO STRIPE ---
-
-        except Exception as e:
-            db.session.rollback()
-            print(f"Erro ao processar inscrição: {str(e)}")
-            flash('Erro ao processar inscrição. Tente novamente.', 'danger')
+                            # O preço precisa de ser em centavos!
+                            'unit_amount': int(evento.preco_atual * 100),
+                        },
+                        'quantity': 1,
+                    }],
+                    mode='payment',
+                    # URLs para onde o utilizador será enviado após a ação
+                    success_url=url_for('public.pagamento_sucesso',
+                                        _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
+                    cancel_url=url_for('public.detalhe_evento', slug=evento.slug, _external=True),
+                    # Metadados para sabermos qual inscrição foi paga
+                    metadata={
+                        'inscricao_id': nova_inscricao.id
+                    }
+                )
+                # Redireciona o utilizador para a página de pagamento do Stripe
+                return redirect(checkout_session.url, code=303)
+            except Exception as e:
+                flash(f"Ocorreu um erro ao comunicar com o sistema de pagamento: {e}", "danger")
+                return redirect(url_for('public.detalhe_evento', slug=evento.slug))
+        else:
+            # Se for gratuito, a inscrição é aprovada diretamente
+            nova_inscricao.status = 'Aprovada'
+            db.session.commit()
+            flash(f'Inscrição gratuita no evento "{evento.nome_evento}" realizada com sucesso!', 'success')
+        return redirect(url_for('public.index'))
+        # --- FIM DA NOVA LÓGICA DO STRIPE ---
 
     # Se não for submissão ou houver erros de validação
     return render_template('inscrever_terceiro.html', title=f'Inscrever em {evento.nome_evento}', form=form,
                            evento=evento)
-
-# @public_bp.route('/inscrever-terceiro/<string:slug>', methods=['GET', 'POST'])
-# @login_required
-# def inscrever_terceiro(slug):
-#     evento = Evento.query.get_or_404(slug)
-#     form = InscricaoTerceiroForm()
-#
-#     form.equipe_id.choices = [(e.id, e.nome_equipe) for e in Equipe.query.order_by('nome_equipe').all()]
-#     form.categoria_id.choices = [(c.id, c.nome) for c in evento.categorias]
-#
-#     if form.validate_on_submit():
-#         # ... (a sua lógica de criar o participante e a inscrição fica aqui) ...
-#         # (esta parte só será executada se a validação passar)
-#         flash('Inscrição realizada com sucesso!', 'success')
-#         return redirect(url_for('public.index'))
-#     else:
-#         # LINHA DE DEPURAÇÃO: Se a validação falhar, imprime os erros no console do Flask
-#         if request.method == 'POST':
-#             print("!!! ERROS DE VALIDAÇÃO DO FORMULÁRIO:", form.errors)
-#
-#     return render_template('inscrever_terceiro.html',
-#                            title="Inscrever Outro Atleta",
-#                            form=form,
-#                            evento=evento)
